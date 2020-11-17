@@ -18,6 +18,7 @@ AllGraphs::usage = "..."
 GraphToMatrix::usage = "..."
 IsGraphNonIntesercting::usage = "..."
 AllNonIntersectionGraphs::usage = "..."
+SchoutenCrossing::usage = "..."
 ellipseLayout::usage = "..."
 DrawAdjacencyGraph::usage = "..."
 
@@ -150,7 +151,7 @@ GraphToMatrix[list_List]:= (*from the graph (the assigned lines), this gives the
 
 
 (* ::Subsection::Closed:: *)
-(*Is the graph free without crossings?*)
+(*Is the graph without crossings?*)
 
 
 Options[IsGraphNonIntesercting]={"Intersecting"->False};
@@ -191,6 +192,52 @@ AllNonIntersectionGraphs[lines_List]:=
 	IsGraphNonIntesercting/@(GraphToMatrix/@AllGraphs[lines])
 
 
+(* ::Subsection:: *)
+(*Schouten = loosen crossings*)
+
+
+(*This function loosen ONE of the crossings in the graphs.*)
+
+
+SchoutenCrossing[adjacencymatrix_List]:=
+	Module[{matrixdim=Length[adjacencymatrix],positions={},matrix1,matrix2},
+		Do[
+			If[
+				adjacencymatrix[[i,j]]!=0,
+				If[
+					adjacencymatrix[[k,l]]!=0,
+					positions={i,k,j,l};
+					Break[];
+				]
+			],
+			{i,1,matrixdim},
+			{j,i+2,matrixdim-1},
+			{k,i+1,j-1},
+			{l,j+1,matrixdim}
+		];
+		
+		If[
+			positions!={},
+			
+			matrix1=adjacencymatrix;
+			matrix1[[positions[[1]],positions[[3]]]]+=-1;
+			matrix1[[positions[[2]],positions[[4]]]]+=-1;
+			matrix2=matrix1;
+			matrix1[[positions[[1]],positions[[2]]]]++;
+			matrix1[[positions[[3]],positions[[4]]]]++;
+			matrix2[[positions[[1]],positions[[4]]]]++;
+			matrix2[[positions[[2]],positions[[3]]]]++;
+			
+			Return[{matrix1,matrix2}],
+			
+			Return[adjacencymatrix]
+		];
+	]
+
+
+(*Instead of untie recursively all the crossings we can choose to untie the first one for all the graphs (this gives an loosening rule) and then substitute recursively. Slower (about x10): count the intersections as Sum[adjacencymatrix[[k,l]]] / use the IsGraphNonIntersecting, and apply recursively the SchoutenCrossing.*)
+
+
 (* ::Subsection::Closed:: *)
 (*Draw graph*)
 
@@ -211,6 +258,7 @@ SetAttributes[
 	AllGraphs,
 	GraphToMatrix,
 	IsGraphNonIntesercting,
+	SchoutenCrossing,
 	ellipseLayout,
 	DrawAdjacencyGraph,
 	AllNonIntersectionGraphs},

@@ -41,7 +41,6 @@ JacobiSU2::usage = "..."
 FromMatricesToEpsilons::usage = "..."
 FromStructuresToEpsilonSU2::usage = "..."
 
-SchoutenCrossing::usage = "..."
 LinearRelationsSU2::usage = "..."
 
 aBox::usage = "..."
@@ -255,7 +254,7 @@ RenameDummiesSU2[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices in the fundamental*)
 
 
@@ -364,7 +363,7 @@ JacobiSU2[exp_]:=
 (*Generation of independent invariant tensors*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*From the adjacency matrix to the associated epsilon structure*)
 
 
@@ -395,12 +394,14 @@ FromMatricesToEpsilons[adjacencymatrix_List,labels_List,numberpoints_Integer,num
 ]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*From the representation structure to the (independent) epsilon structures*)
 
 
 FromStructuresToEpsilonSU2[pointslines_List]:=
 	Module[{localpointslines,numberfundlabels=0,lines,labels,numberpoints=Length[pointslines],admatrices,structures},
+	
+		If[pointslines=={},Return[{1}]];
 
 		localpointslines=Sort[pointslines,#1[[2]]<=#2[[2]]&]; (*fundamental first!*)
 
@@ -428,53 +429,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 (*TODO: implement the contraction in the functions above.*)*)
 
 
-(* ::Subsubsection::Closed:: *)
-(*Schouten = loosen crossings*)
-
-
-(*This function loosen ONE of the crossings in the graphs.*)
-
-
-SchoutenCrossing[adjacencymatrix_List]:=
-	Module[{matrixdim=Length[adjacencymatrix],positions={},matrix1,matrix2},
-		Do[
-			If[
-				adjacencymatrix[[i,j]]!=0,
-				If[
-					adjacencymatrix[[k,l]]!=0,
-					positions={i,k,j,l};
-					Break[];
-				]
-			],
-			{i,1,matrixdim},
-			{j,i+2,matrixdim-1},
-			{k,i+1,j-1},
-			{l,j+1,matrixdim}
-		];
-		
-		If[
-			positions!={},
-			
-			matrix1=adjacencymatrix;
-			matrix1[[positions[[1]],positions[[3]]]]+=-1;
-			matrix1[[positions[[2]],positions[[4]]]]+=-1;
-			matrix2=matrix1;
-			matrix1[[positions[[1]],positions[[2]]]]++;
-			matrix1[[positions[[3]],positions[[4]]]]++;
-			matrix2[[positions[[1]],positions[[4]]]]++;
-			matrix2[[positions[[2]],positions[[3]]]]++;
-			
-			Return[{matrix1,matrix2}],
-			
-			Return[adjacencymatrix]
-		];
-	]
-
-
-(*Instead of untie recursively all the crossings we can choose to untie the first one for all the graphs (this gives an loosening rule) and then substitute recursively. Slower (about x10): count the intersections as Sum[adjacencymatrix[[k,l]]] / use the IsGraphNonIntersecting, and apply recursively the SchoutenCrossing.*)
-
-
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Generation of the su(2) linear relations*)
 
 
@@ -653,7 +608,7 @@ StructureConstantSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Contractions and dummy labels*)
 
 
@@ -789,7 +744,7 @@ AdjConstraint[x_Times]:=Times@@(AdjConstraint/@(List@@x))
 AdjConstraint[x_]:=If[MatchQ[x,DeltaSU3[aLabel[a_],bLabel[b_]]/;a==b],0,x]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Some functions*)
 
 
@@ -817,7 +772,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 			];
 			
 		If[
-			\[Not](Length[labelsantif]==Length[labelsfund]),
+			(Length[labelsantif[[1]]]==Length[labelsfund]),
 			allinvariants=
 				Transpose/@
 				Tuples[{{labelsfund},labelsantif}];
@@ -828,7 +783,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*All invariant (representation with deltas)*)
 
 
@@ -836,12 +791,13 @@ AllInvariantDeltas[labelsrepresentations_List]:=
 Times@@@PairingsToDelta/@AllInvariantsSU3[labelsrepresentations]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Simplifying the invariant tensors (both SU(2) and SU(3))*)
 
 
 SimplifyInvariants[list_List]:=
 	Module[{localinv=Sort[list],number=Length[list]},
+		If[list=={1},Return[{1}]];
 		Do[
 			If[
 				Head[localinv[[i]]]===Plus, (*TrueQ, which gives true only if the expression evaluates to true. Gives false in any other case.*)
@@ -937,7 +893,6 @@ SetAttributes[
 	JacobiSU2,
 	FromMatricesToEpsilons,
 	FromStructuresToEpsilonSU2,
-	SchoutenCrossing,
 	LinearRelationsSU2,
 	aBox,
 	aLabel,

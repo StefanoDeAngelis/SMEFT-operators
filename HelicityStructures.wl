@@ -16,10 +16,7 @@ PrimaryAmplitudeHelicity::usage = "..."
 AmplitudesStructure::usage = "..."
 AmplitudesScalars::usage = "..."
 HelicityStructure::usage = "..."
-IndependentMomenta::usage = "..."
 PartitionMomenta::usage = "..."
-AllPartitions::usage = "..."
-AllMomentaPartition::usage = "..."
 MomentaSelection::usage = "..."
 SpinorStructure::usage = "..."
 CountsToList::usage = "..."
@@ -30,9 +27,6 @@ Bracket::usage = "..."
 FromMatrixToSpinors::usage = "..."
 FromStructuresToSpinors::usage = "..."
 AnglesAndSquares::usage = "..."
-MatterContentStructures::usage = "..."
-AreSameFormFactor::usage = "..."
-IndependentFormFactors::usage = "..."
 
 
 (* ::Section:: *)
@@ -145,37 +139,6 @@ HelicityStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:=
 	]
 
 
-(* ::Text:: *)
-(*(*We want to avoid the repetition of certain operators under permutations of the labels of identical fields: taking the corresponding partition of the integer number of total number of derivatives for a certain number of field (gluonsM, gluonsP, fermM ecc.), we identify each independent operator with the partition of the number of derivates associated to a given particle species.*)*)
-
-
-(* ::Subsubsection:: *)
-(*Independent momenta*)
-
-
-IndependentMomenta[gluonsM_,gluonsP_,fermM_,fermP_,scals_,ders_]:=
-	Module[{moms},
-		moms=
-		Module[{fields={gluonsM,gluonsP,fermM,fermP,scals},totalfields},
-			totalfields=Sum[fields[[n]],{n,1,Length[fields]}];
-			Table[
-				Table[
-					If[(totalfields>3)&&(i==totalfields),Nothing,i],(*The last field can be excluded using MOMENTUM CONSERVATION, if it can be applied (n>3)*)
-					{i,
-						Sum[fields[[n]],{n,1,j-1}] (*the fields are labelled in order (all gluonsM) \[Rule] (all gluonsP) \[Rule] (all fermsM) \[Rule] (all fermP) \[Rule] (scals)*)
-							+1,
-						Sum[fields[[n]],{n,1,j-1}]
-							+If[fields[[j]]<=ders,fields[[j]],ders] (*For a given species, we can restrict to a number of fields which is less than the total number of derivatives, taking into account the permutations of the labels*)
-					}
-				],
-				{j,1,Length[fields]}
-			]
-		];
-		moms=DeleteCases[moms,{}]; (*delete void lists, because in the following functions the species of the fields are not relevant and we can forget about those that are not contributing*)
-		Return[moms];
-	]
-
-
 (* ::Subsubsection:: *)
 (*Partition of momenta*)
 
@@ -194,68 +157,23 @@ PartitionMomenta[moms_,partition_]:= (*Given a certain partition and a list of m
 
 
 (* ::Subsubsection:: *)
-(*All partitions*)
-
-
-AllPartitions[moms_,ders_]:= (*gives all the permutation of partitions of partitions, given a certain NUMBER of field species contribution to the operator (up to momentum conservation) and number of total derivatives*)
-	Module[{lengthmoms=Length[moms],partitions},
-		partitions=
-			Map[
-				IntegerPartitions[#]&,
-				IntegerPartitions[ders,lengthmoms],
-				{2}
-			] (*generates partitions of the partitions of the total number of momenta into the number of momenta of the fields*);
-		partitions=
-			Flatten[
-				Map[
-					Permutations,
-					Map[
-						PadRight[#,lengthmoms]&,
-						Flatten[Tuples/@partitions,1]  (*combine the generated partitions of partitions in such a way that we have a list of list which sum of single elements = number of total derivatives.*)
-					](*PadRight add zeros such that the number of level 1 elemets of the list is equal to the number of fields in the operator*)
-				],
-			1];
-		Return[partitions];
-	]
-
-
-(* ::Subsubsection:: *)
-(*Partition of momenta*)
-
-
-AllMomentaPartition[moms_,partition_]:= (*given a partition of partition, this function assigns it to list of momenta grouped according to the field species*)
-	Module[{table,lengthmoms=Length[moms]},
-		If[
-			Sum[
-				Boole[Length[partition[[n]]]<=Length[moms[[n]]]],{n,1,lengthmoms}
-			]==lengthmoms,(*check whether the lenght of the partition of partition is compatible to the length of lists of momenta. An example is shown in the first example below.*)
-			table=
-				Table[
-					PartitionMomenta[moms[[i]],partition[[i]]],
-					{i,1,lengthmoms}
-				];
-			Return[table], (*assign to each list of momenta its partition*)
-			Return[Nothing];
-		]
-	]
-
-
-(* ::Subsubsection:: *)
 (*Momenta Selection*)
 
 
 MomentaSelection[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*generates all the independent momenta, their corresponding partitions of partitions and assign all of them to the lists of momenta*)
-	Module[{scals=d-2(gluonsM+gluonsP)-3/2*(fermM+fermP)-ders,moms},
-		moms=IndependentMomenta[gluonsM,gluonsP,fermM,fermP,scals,ders];
-		moms=
-			Sort[ (* sort the elements according to a canonical order *)
-				Map[
-					Flatten,
-					AllMomentaPartition[moms,#]&/@AllPartitions[moms,ders]
-				]
+	Module[{scals=d-2(gluonsM+gluonsP)-3/2*(fermM+fermP)-ders,moms,partitions,numberfields},
+		numberfields=gluonsM+gluonsP+fermM+fermP+scals;
+		moms=Table[i,{i,1,numberfields-1}];(*momentum conservation*)
+		partitions=
+			Flatten[
+				Permutations/@
+					(PadRight[#,numberfields-1]&/@
+						IntegerPartitions[ders,numberfields-1]),
+				1
 			];
-		Return[moms];
-	]
+		moms=PartitionMomenta[moms,#]&/@partitions;
+		Return[moms]
+]
 
 
 (* ::Subsubsection:: *)
@@ -297,33 +215,30 @@ CountsToList[list_List]:= (*counts the number of times each distinct element app
 
 
 IsSingletDoable[{List1_,List2_}]:= (*the counting of one element can never exceed half of the total number of countings*)
-	Module[{counts1=Counts[List1],lengthcounts1,counts2=Counts[List2],lengthcounts2,test1,test2},
-	(*List1 and List2 are made of repeated elements, for example {1,1,1,2,2,3,3,6}*)
-		lengthcounts1=Length[counts1];
-		lengthcounts2=Length[counts2];
+	Module[{counts1=Counts[List1],counts2=Counts[List2],test1,test2},
+		(*List1 and List2 are made of repeated elements, for example {1,1,1,2,2,3,3,6}*)
 
 		test1=
-			Sum[
-				Boole[
-					counts1[[i]]<=Length[List1]/2 
-				],
-				{i,1,lengthcounts1}
-			]==lengthcounts1;
+			And@@
+				Table[
+					counts1[[i]]<=Length[List1]/2 ,
+					{i,1,Length[counts1]}
+				];
 
 		test2=
-			Sum[
-				Boole[
-					counts2[[i]]<=Length[List2]/2
-				],
-				{i,1,lengthcounts2}
-			]==lengthcounts2;
+			And@@
+				Table[
+					counts2[[i]]<=Length[List2]/2 ,
+					{i,1,Length[counts2]}
+				];
 
 		If[
 			test1&&test2,
-			Return[{CountsToList[List1],CountsToList[List2]}],
+			Return[
+				{CountsToList[List1],CountsToList[List2]}
+			],
 			Return[Nothing];
 		];
-
 	]
 
 
@@ -343,10 +258,12 @@ Begin["`FormFactors`"]
 
 BracketBox[a_, b_] :=
     TemplateBox[{a, b}, "Bracket",
-        DisplayFunction -> (RowBox[{"(",RowBox[{#1,",",#2}],")"}]&),
+        DisplayFunction -> (RowBox[{"(",RowBox[{#1,"|",#2}],")"}]&),
         InterpretationFunction -> (RowBox[{"Bracket","[",RowBox[{#1,",",#2}],"]"}]&)]
 
 Bracket /: MakeBoxes[Bracket[a_, b_], StandardForm | TraditionalForm] := BracketBox[ToBoxes[a], ToBoxes[b]]
+
+Bracket[a_,b_]/;\[Not]OrderedQ[{a,b}]:=-Bracket[b,a]
 
 
 (* ::Subsubsection:: *)
@@ -411,112 +328,6 @@ AnglesAndSquares[{anglestructure_List,squarestructure_List}]:=
 	]
 
 
-(* ::Subsubsection:: *)
-(*Matter Content associated to each form factor*)
-
-
-MatterContentStructures[formfactorStructures_List,dimO_]:=
-	Module[{formfactor,helicities,numberparticles,dimFF,labels={{},{},{},{},{}},numberderivatives,i,numbergluons=0,numberfermions=0,numberscalars=0},
-		formfactor=formfactorStructures[[1,1]]*formfactorStructures[[2,1]];
-		helicities=HelicityWeight[formfactor];
-		dimFF=MassDimension[formfactor];
-		numberparticles=Length[helicities];
-		For[i=1,i<=numberparticles,i++,
-			If[
-				helicities[[i,2]]==-2,
-				(numbergluons++;
-				labels[[1]]=Append[labels[[1]],helicities[[i,1]]]),
-				If[
-					helicities[[i,2]]==2,
-					(numbergluons++;
-					labels[[2]]=Append[labels[[2]],helicities[[i,1]]]),
-					If[
-						helicities[[i,2]]==-1,
-						(numberfermions++;
-						labels[[3]]=Append[labels[[3]],helicities[[i,1]]]),
-						If[
-							helicities[[i,2]]==1,
-							(numberfermions++;
-							labels[[4]]=Append[labels[[4]],helicities[[i,1]]]),
-							If[
-								helicities[[i,2]]==0,
-								(numberscalars++;
-								labels[[5]]=Append[labels[[5]],helicities[[i,1]]])
-							]
-						]
-					]
-				]
-			]
-		];
-		For[i=numbergluons+numberfermions+numberscalars+1,i<=(dimO-dimFF),i++,
-			labels[[5]]=Append[labels[[5]],i];
-		];
-		If[
-			labels[[2]]=={},
-			If[
-				labels[[1]]=={},
-				numbergluons=0,
-				numbergluons=Last[labels[[1]]]
-			],
-			numbergluons=Last[labels[[2]]]
-		];
-		numberderivatives=(dimO-2*numbergluons-3/2*numberfermions-(dimO-dimFF-numbergluons-numberfermions));
-		Return[{formfactorStructures,labels,numberderivatives}]
-	]
-
-
-(* ::Subsubsection:: *)
-(*Are  the Same Form Factor?*)
-
-
-AreSameFormFactor[{firstff_,secondff_},mattercontent_]:=
-	Module[{localmatter=DeleteCases[mattercontent,{}],allrelabelling,duplicateQ},
-		allrelabelling=Tuples[Permutations/@localmatter];
-		duplicateQ=
-			MemberQ[
-				ReLabel[secondff,localmatter,#]&/@allrelabelling,
-				firstff
-			];
-		Return[duplicateQ];
-	]
-
-
-(* ::Text:: *)
-(*I want to write a function that can recognise that two different form factors are the same after relabelling, e.g. Spinoranglebracket[1,2]^2 Spinoranglebracket[3,4]^2,Spinoranglebracket[1,4]^2 Spinoranglebracket[2,3]^2.*)
-(*The relabelling of the momenta has already been taken into account, then there is no need to check whether there could be a repetition for the operators by relabelling the scalars, because there enter in the form factors only through the momenta.*)
-
-
-(* ::Subsubsection:: *)
-(*Independent Form Factors*)
-
-
-IndependentFormFactors[formfactors_List,mattercontent_]:=
-	Module[{localff=formfactors,couples,length,stop=True},
-		While[
-			stop,
-			If[
-				Length[localff]==1,Return[localff]
-			]; (*one single form factor cannot be repeated*)
-			couples=Subsets[localff,{2}]; (*takes couples of form factors*)
-			length=Length[couples];
-			Do[
-				If[
-					AreSameFormFactor[couples[[i]],mattercontent], (*check if a couple is a repetition*)
-					localff=DeleteCases[localff,couples[[i,2]]]; (*if yes, delete the second f.f. of the couple*)
-					Break[], (*and generate new couples*)
-					If[i==length,stop=False] (*if it checked all the couples, we have a list of *)
-				],
-				{i,1,length}
-			]
-		];
-		Return[localff];
-	]
-
-
-(* ::Text:: *)
-(*An alternative function could generate all the permutations of the first formfactor and check whether there are repetitions in the others and delete them. Then it generates the permutations of the second (remaining) f.f. and so on. This could be faster because the permutations for one type of operators is generated only once.*)
-
-
 End[]
 
 
@@ -542,10 +353,7 @@ SetAttributes[
 	Bracket,
 	FromMatrixToSpinors,
 	FromStructuresToSpinors,
-	AnglesAndSquares,
-	MatterContentStructures,
-	AreSameFormFactor,
-	IndependentFormFactors
+	AnglesAndSquares
     },
     Protected
 ]

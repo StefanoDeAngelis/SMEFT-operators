@@ -4,20 +4,21 @@
 (*SM Fields and Gauge Singlets*)
 
 
-BeginPackage["SMandGaugeSinglets`"]
+BeginPackage["SMandGaugeSinglets`",{"SUInvariants`"}]
 
 
 (* ::Section:: *)
 (*Messages*)
 
 
-TransformationRules::usage = "..."
-GGp::usage = "..."
-WWp::usage = "..."
-BBp::usage = "..."
-GGm::usage = "..."
-WWm::usage = "..."
-BBm::usage = "..."
+TransformationRules::usage = "Associate to each particle of the Standard Model its transformation property under the gauge group."
+OrderingRule::usage = "The order chosen for the SM fields"
+GGp::usage = "The gluons with plus helicity"
+WWp::usage = "The W bosons with plus helicity"
+BBp::usage = "The B boson with plus helicity"
+GGm::usage = "The gluons with minus helicity"
+WWm::usage = "The W bosons with minus helicity"
+BBm::usage = "The B boson with minus helicity"
 QQ::usage = "..."
 uu::usage = "..."
 dd::usage = "..."
@@ -31,22 +32,20 @@ eBar::usage = "..."
 HH::usage = "..."
 HBar::usage = "..."
 
-adj::usage = "..."
-sing::usage = "..."
-fund::usage = "..."
-afund::usage = "..."
+adj::usage = "The adjoint representation of both the SU(2) and SU(3) gauge groups"
+sing::usage = "The singlet representation for both the SU(2) and SU(3) gauge groups"
+fund::usage = "The fundamental representation for the SU(3) gauge group"
+afund::usage = "The antifundamental representation for the SU(3) gauge group"
 
-GluonsM::usage = "..."
-GluonsP::usage = "..."
-FermionsM::usage = "..."
-FermionsP::usage = "..."
-Scalars::usage = "..."
-Fields::usage = "..."
+GluonsM::usage = "All the vectors with plus helicity"
+GluonsP::usage = "All the vectors with minus helicity"
+FermionsM::usage = "All the fermions with plus helicity"
+FermionsP::usage = "All the fermions with minus helicity"
+Scalars::usage = "All the scalars"
+Fields::usage = "All the fields of the Standard Model"
 
-ColourSingletDoable::usage = "..."
+ColourSingletDoable::usage = "Given a list of particles of the Standard Model, the function gives the list back if it possible to form a colour singlet."
 CombinationsOfFields::usage = "..."
-LabelsToNumbers::usage = "..."
-SMEFTOperatorDoable::usage = "..."
 
 
 (* ::Section:: *)
@@ -64,6 +63,13 @@ TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm-
 
 
 (* ::Subsection:: *)
+(*Fields order*)
+
+
+OrderingRule={GGp,GGm,WWp,WWm,BBp,BBm,QQ,uu,dd,LL,ee,QBar,uBar,dBar,LBar,eBar,HH,HBar}
+
+
+(* ::Subsection:: *)
 (*Fields and their helicity configuration*)
 
 
@@ -72,7 +78,7 @@ GluonsM={GGm,WWm,BBm}
 FermionsP={QQ,uu,dd,LL,ee}
 FermionsM={QBar,uBar,dBar,LBar,eBar}
 Scalars={HH,HBar}
-Fields={GluonsP,GluonsM,FermionsP,FermionsM,Scalars};
+Fields={GluonsM,GluonsP,FermionsM,FermionsP,Scalars};
 
 
 (* ::Subsection:: *)
@@ -80,13 +86,13 @@ Fields={GluonsP,GluonsM,FermionsP,FermionsM,Scalars};
 
 
 ColourSingletDoable[fields_List]:=
-	Module[{tensorstructure,adjointSU3,fundSU3,afundSU3,adjointSU2,fundSU2,charge},
+	Module[{tensorstructure,adjointSU3,fundSU3,afundSU3,adjointSU2,fundSU2,charge,chargedQ},
 		tensorstructure=Transpose[
 			ReplaceAll[
 				fields,
 				TransformationRules
 			]
-		];
+		]; (*we substitute the transformation rules to each field and by doing the Transpose we group the representations according to the subgroups *)
 		adjointSU3=Count[tensorstructure[[1]],adj];
 		fundSU3=Count[tensorstructure[[1]],fund];
 		afundSU3=Count[tensorstructure[[1]],afund];
@@ -95,7 +101,7 @@ ColourSingletDoable[fields_List]:=
 		charge=Total[tensorstructure[[3]]];
 		If[
 			((fundSU3==0&&afundSU3==0&&adjointSU3!=1)||(fundSU3!=0&&fundSU3==afundSU3))&&((fundSU2==0&&adjointSU2!=1)||(fundSU2!=0&&EvenQ[fundSU2]))&&
-			charge==0,
+			charge==0, (*singlet conditions*)
 			Return[fields],
 			Return[Nothing];
 		]
@@ -112,12 +118,12 @@ CombinationsOfFields[listNumbers_List]:=
 			types==5,
 			groupingFields=
 				Table[
-					Sort[ (*this order sort\[Rule]deleteduplicates\[Rule]sort is slightly faster than sort\[Rule]sort\[Rule]deleteduplicates*)
+					(*Sort[*) (*this order sort\[Rule]deleteduplicates\[Rule]sort is slightly faster than sort\[Rule]sort\[Rule]deleteduplicates*)
 						DeleteDuplicates[
-							Sort/@ (*sort to recognise duplicates*)
-								Tuples[Fields[[i]],listNumbers[[i]]]
+							Sort(*By[#,Position[OrderingRule,#]&]&*)/@ (*sort to recognise duplicates*)
+								Tuples[Fields[[i]],listNumbers[[i]]] (*given the species, we take listNumber[[i]] of them maybe this can be fastened using IntegerPartions[listNumber[[i]]], PadRight[#,Length[Fields[[i]]]] and Permutations)*)
 						]
-					],
+					(*]*),
 					{i,1,5}
 				];
 			groupingFields=
@@ -131,33 +137,6 @@ CombinationsOfFields[listNumbers_List]:=
 	]
 
 
-(* ::Subsection:: *)
-(*Labels to numbers*)
-
-
-LabelsToNumbers[listLabels_List]:=
-	Module[{listNumbers},
-		listNumbers=Length/@listLabels;
-		Return[listNumbers];
-	]
-
-
-(* ::Subsection:: *)
-(*Is the a SMEFT operator doable?*)
-
-
-SMEFTOperatorDoable[{helicityStructures_,listLabels_List,numberDerivatives_Integer}]:=
-	Module[{listNumbers=LabelsToNumbers[listLabels],combinations,numberCombinations,operators},
-		combinations=CombinationsOfFields[listNumbers];
-		numberCombinations=Length[combinations];
-		operators=
-			Table[
-				{helicityStructures,listLabels,numberDerivatives,combinations[[i]]},
-				{i,1,numberCombinations}
-			]
-	]
-
-
 End[]
 
 
@@ -168,6 +147,7 @@ End[]
 SetAttributes[
     {
 	TransformationRules,
+	OrderingRule,
 	GGp,
 	WWp,
 	BBp,
@@ -197,9 +177,7 @@ SetAttributes[
 	Scalars,
 	Fields,
 	ColourSingletDoable,
-	CombinationsOfFields,
-	LabelsToNumbers,
-	SMEFTOperatorDoable
+	CombinationsOfFields
 	},
     Protected
 ]
