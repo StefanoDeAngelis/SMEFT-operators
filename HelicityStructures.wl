@@ -27,6 +27,10 @@ Bracket::usage = "..."
 FromMatrixToSpinors::usage = "..."
 FromStructuresToSpinors::usage = "..."
 AnglesAndSquares::usage = "..."
+MatterContent::usage = "..."
+IndependentHelicityFactors::usage = "..."
+
+SchoutenIdentities::usage = "..."
 
 
 (* ::Section:: *)
@@ -58,16 +62,18 @@ PrimaryAmplitudeHelicityFields[d_]:= (*This function generates all the possible 
 
 
 PrimaryAmplitudeHelicity[d_]:= (*A more refined version of the previous function which distinguishes between helicity configurations*)
-	Flatten[
-		Table[
-			If[
-				((3/2*(fermM+fermP)+2*(gluonsM+gluonsP))<= d)&&(gluonsM+1/2*fermM>=gluonsP+1/2*fermP), (*The second condition is the restiction to the configurations for which the total helicity is non-positive*)
-				{{gluonsM,gluonsP},{fermM,fermP}},
-				Nothing
+	Sort[
+		Flatten[
+			Table[
+				If[
+					((3/2*(fermM+fermP)+2*(gluonsM+gluonsP))<= d)(*&&(gluonsM+1/2*fermM>=gluonsP+1/2*fermP)*), (*The second condition is the restiction to the configurations for which the total helicity is non-positive*)
+					{{gluonsM,gluonsP},{fermM,fermP}},
+					Nothing
+				],
+				{gluonsM,0,IntegerPart[d/2]},{gluonsP,0,IntegerPart[d/2]},{fermM,0,IntegerPart[2*d/3]},{fermP,0,IntegerPart[2*d/3]}
 			],
-			{gluonsM,0,IntegerPart[d/2]},{gluonsP,0,IntegerPart[d/2]},{fermM,0,IntegerPart[2*d/3]},{fermP,0,IntegerPart[2*d/3]}
-		],
-	3]
+		3]
+	]
 
 
 (* ::Subsubsection:: *)
@@ -328,6 +334,100 @@ AnglesAndSquares[{anglestructure_List,squarestructure_List}]:=
 	]
 
 
+(* ::Subsubsection:: *)
+(*Matter Content*)
+
+
+MatterContent[d_,helicityfactor_]:=
+	Module[{matter,hel={-2,2,-1,1},scalars},
+		matter=HelicityWeight[helicityfactor];
+		matter=Table[Count[matter,_?(MatchQ[#[[2]],hel[[i]]]&)],{i,4}];
+		scalars=d-MassDimension[helicityfactor]-Total[matter];
+		matter=Append[matter,scalars];
+		Return[{matter,helicityfactor}]
+	]
+
+
+(* ::Subsubsection:: *)
+(*Independent Helicity Factors*)
+
+
+Options[IndependentHelicityFactors]={"MatterContent"->True}
+
+IndependentHelicityFactors[d_,OptionsPattern[]]:=
+	Module[{structures},
+		structures=Flatten[SpinorStructure[d][#]&/@AmplitudesStructure[d],1];
+
+		structures=IsSingletDoable[#]&/@structures;
+
+		structures=Flatten[AnglesAndSquares[#]&/@structures];
+
+		If[
+			OptionValue["MatterContent"],
+			structures=MatterContent[d,#]&/@structures;
+		];
+
+		Return[structures]
+	]
+
+
+(* ::Subsubsection:: *)
+(*Schouten Identities*)
+
+
+SchoutenIdentities[pointslines_List]:=
+	Module[{lines,labels,numberpoints=Length[pointslines],intersecting,numberinter,nonintersecting,numbernoninter,replacements,graphlabels,x,y},
+
+		lines=Table[pointslines[[i,2]],{i,1,numberpoints}];
+		labels=Table[pointslines[[i,1]],{i,1,numberpoints}];
+
+		numberfundlabels=Count[lines,1];
+
+		intersecting=Map[PadLeft[#,numberpoints]&,Append[#,{}]&/@AllGraphs[lines],{2}]; (*generate all graphs*)
+
+		nonintersecting=IsGraphNonIntesercting/@intersecting; (*generate non-intersecting graphs*)
+		numbernoninter=Length[nonintersecting];
+
+		intersecting=Complement[intersecting,nonintersecting]; (*complement to take select the intersecting graphs*)
+		numberinter=Length[intersecting];
+
+		graphlabels=
+			Join[
+				Table[
+					intersecting[[i]]->x[i], (*assign labels to intersecting and intersecting graphs*)
+					{i,1,numberinter}
+				],
+				Table[
+					nonintersecting[[i]]->y[i], (*assign labels to intersecting and non-intersecting graphs*)
+					{i,1,numbernoninter}
+				]
+			];
+		
+		(*generators=Product[TauSU2[ILabel[labels[[i]]]][xLabel[labels[[i]],1],xLabel[labels[[i]],2]],{i,numberfundlabels+1,numberpoints}];*) (*senza motivo!*)
+
+		nonintersecting=
+			Table[
+				y[i]->FromMatrixToSpinors[nonintersecting[[i]],labels],
+				{i,1,numbernoninter}
+			];
+
+		replacements=
+			Table[
+				x[i]->Total[SchoutenCrossing[intersecting[[i]]]/.graphlabels],
+				{i,1,Length[intersecting]}
+			];
+			
+		replacements=
+			Table[
+				FromMatrixToSpinors[intersecting[[i]],labels] -> Expand[x[i]//.replacements]/.nonintersecting,
+				{i,1,numberinter}
+			]; (*placing the repeated replacements inside the list speeds the function up*)
+
+		Return[replacements];
+
+]
+
+
 End[]
 
 
@@ -353,7 +453,10 @@ SetAttributes[
 	Bracket,
 	FromMatrixToSpinors,
 	FromStructuresToSpinors,
-	AnglesAndSquares
+	AnglesAndSquares,
+	MatterContent,
+	IndependentHelicityFactors,
+	SchoutenIdentities
     },
     Protected
 ]

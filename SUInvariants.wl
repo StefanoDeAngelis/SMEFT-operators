@@ -206,7 +206,7 @@ DeltaBoxSU2[A_,B_] :=
 DeltaSU2 /: MakeBoxes[DeltaSU2[A_,B_], StandardForm | TraditionalForm] := DeltaBoxSU2[ToBoxes[A],ToBoxes[B]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Symmetry properties of building blocks*)
 
 
@@ -258,9 +258,9 @@ RenameDummiesSU2[exp_,n_]:=
 (*Contract indices in the fundamental*)
 
 
-ContractSU2[exp_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
+ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
-		{localexp=exp,raiseindices={},normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=1},
+		{localexp=exp,raiseindices={},normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=dummylabel},
 		
 		raiseindices=
 			{
@@ -319,12 +319,12 @@ ContractSU2[exp_]:= (*dummylabel is needed because I don't want the labels to mi
 				Expand[ReplaceRepeated[#,deltaadj]]&,
 				localexp
 			];
-		
+		localexp=RenameDummiesSU2[localexp,dummylabel];
 		Return[localexp];
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Jacobi identities*)
 
 
@@ -363,7 +363,7 @@ JacobiSU2[exp_]:=
 (*Generation of independent invariant tensors*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From the adjacency matrix to the associated epsilon structure*)
 
 
@@ -394,7 +394,7 @@ FromMatricesToEpsilons[adjacencymatrix_List,labels_List,numberpoints_Integer,num
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From the representation structure to the (independent) epsilon structures*)
 
 
@@ -429,7 +429,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 (*TODO: implement the contraction in the functions above.*)*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Generation of the su(2) linear relations*)
 
 
@@ -443,27 +443,27 @@ LinearRelationsSU2[pointslines_List]:=
 
 		numberfundlabels=Count[lines,1];
 
-		intersecting=Map[PadLeft[#,numberpoints]&,Append[#,{}]&/@AllGraphs[lines],{2}];
+		intersecting=Map[PadLeft[#,numberpoints]&,Append[#,{}]&/@AllGraphs[lines],{2}]; (*generate all graphs*)
 
-		nonintersecting=IsGraphNonIntesercting/@intersecting;
+		nonintersecting=IsGraphNonIntesercting/@intersecting; (*generate non-intersecting graphs*)
 		numbernoninter=Length[nonintersecting];
 
-		intersecting=Complement[intersecting,nonintersecting];
+		intersecting=Complement[intersecting,nonintersecting]; (*complement to take select the intersecting graphs*)
 		numberinter=Length[intersecting];
 
 		graphlabels=
 			Join[
 				Table[
-					intersecting[[i]]->x[i],
+					intersecting[[i]]->x[i], (*assign labels to intersecting and intersecting graphs*)
 					{i,1,numberinter}
 				],
 				Table[
-					nonintersecting[[i]]->y[i],
+					nonintersecting[[i]]->y[i], (*assign labels to intersecting and non-intersecting graphs*)
 					{i,1,numbernoninter}
 				]
 			];
 		
-		generators=Product[TauSU2[ILabel[labels[[i]]]][xLabel[labels[[i]],1],xLabel[labels[[i]],2]],{i,numberfundlabels+1,numberpoints}];
+		(*generators=Product[TauSU2[ILabel[labels[[i]]]][xLabel[labels[[i]],1],xLabel[labels[[i]],2]],{i,numberfundlabels+1,numberpoints}];*) (*senza motivo!*)
 
 		nonintersecting=
 			Table[
@@ -608,7 +608,7 @@ StructureConstantSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Contractions and dummy labels*)
 
 
@@ -744,7 +744,7 @@ AdjConstraint[x_Times]:=Times@@(AdjConstraint/@(List@@x))
 AdjConstraint[x_]:=If[MatchQ[x,DeltaSU3[aLabel[a_],bLabel[b_]]/;a==b],0,x]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Some functions*)
 
 
@@ -783,7 +783,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All invariant (representation with deltas)*)
 
 
@@ -791,7 +791,7 @@ AllInvariantDeltas[labelsrepresentations_List]:=
 Times@@@PairingsToDelta/@AllInvariantsSU3[labelsrepresentations]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Simplifying the invariant tensors (both SU(2) and SU(3))*)
 
 
@@ -828,7 +828,7 @@ SimplifyInvariants[list_List]:=
 (**)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Relations between the SU(3) invariants up to dimension 11 SMEFT operators (up to dimension 9 for the moment)*)
 
 

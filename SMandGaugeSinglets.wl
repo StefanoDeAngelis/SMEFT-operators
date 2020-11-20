@@ -4,7 +4,7 @@
 (*SM Fields and Gauge Singlets*)
 
 
-BeginPackage["SMandGaugeSinglets`",{"SUInvariants`"}]
+BeginPackage["SMandGaugeSinglets`",{"SUInvariants`","YoungSymm`"}]
 
 
 (* ::Section:: *)
@@ -46,6 +46,13 @@ Fields::usage = "All the fields of the Standard Model"
 
 ColourSingletDoable::usage = "Given a list of particles of the Standard Model, the function gives the list back if it possible to form a colour singlet."
 CombinationsOfFields::usage = "..."
+
+SU3singlet::usage = "..."
+SU2singlet::usage = "..."
+GaugeSinglets::usage = "..."
+
+FullAmplitude::usage = "..."
+FinalAmplitude::usage = "..."
 
 
 (* ::Section:: *)
@@ -137,6 +144,139 @@ CombinationsOfFields[listNumbers_List]:=
 	]
 
 
+(* ::Subsection:: *)
+(*SU(3) singlet*)
+
+
+SU3singlet[replist_List]:=
+	Module[{reps={}},
+		Do[
+			If[
+				replist[[i]]==adj,
+				AppendTo[reps,{i,0}]
+			];
+			If[
+				replist[[i]]==fund,
+				AppendTo[reps,{i,1}]
+			];
+			If[
+				replist[[i]]==afund,
+				AppendTo[reps,{i,-1}]
+			],
+			{i,1,Length[replist]}
+		];
+		Return[reps];
+	]
+
+
+(* ::Subsection:: *)
+(*SU(2) singlet*)
+
+
+SU2singlet[replist_List]:=
+	Module[{reps={}},
+		Do[
+			If[
+				replist[[i]]==adj,
+				AppendTo[reps,{i,2}]
+			];
+			If[
+				replist[[i]]==fund,
+				AppendTo[reps,{i,1}]
+			],
+			{i,1,Length[replist]}
+		];
+		Return[reps];
+		]
+
+
+(* ::Subsection:: *)
+(*Gauge Singlets*)
+
+
+Options[GaugeSinglets]={"RenormalisableTree"->False}
+
+GaugeSinglets[fields_List,OptionsPattern[]]:=
+	Module[{singlets,adjointSU3,adjointSU2},
+		singlets=
+			Transpose[
+				ReplaceAll[fields,TransformationRules]
+			];
+		If[
+			OptionValue["RenormalisableTree"]==True,
+			If[
+				(MemberQ[fields,BBm]||MemberQ[fields,BBp])&&\[Not]MemberQ[singlets[[3]],_?(#!=0&)],
+				Return[Null]
+			]
+		];
+		singlets=Drop[singlets,-1];
+		adjointSU3=Flatten[Position[singlets[[1]],adj]];
+		singlets[[1]]=
+			SimplifyInvariants[
+				ContractSU3[#,Length[fields]+1]&/@
+					(Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,adjointSU3}]
+						AllInvariantDeltas[
+							SU3singlet[singlets[[1]]]
+						])
+			];
+		adjointSU2=Flatten[Position[singlets[[2]],adj]];
+		singlets[[2]]=
+			SimplifyInvariants[
+				ContractSU2[#,Length[fields]+1]&/@
+					(Product[TauSU2[ILabel[i]][xLabel[i,120],xLabel[i,121]],{i,adjointSU2}]
+						FromStructuresToEpsilonSU2[
+							SU2singlet[singlets[[2]]]
+						])
+			];
+		singlets=Map[(Times@@#)&,Tuples[singlets],{1}];
+		Return[singlets];
+	]
+
+
+(* ::Subsection:: *)
+(*Full Amplitude*)
+
+
+Options[FullAmplitude]={"RenormalisableTree"->False}
+
+FullAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
+	Module[{colourfactors=GaugeSinglets[fields,"RenormalisableTree"->OptionValue["RenormalisableTree"]],amplitudes},
+		If[colourfactors==Null,Return[Nothing]];
+		amplitudes=Thread[Times[colourfactors,helicity]];
+		amplitudes=Table[{fields,amplitudes[[i]]},{i,1,Length[amplitudes]}];
+		Return[amplitudes];
+	]
+
+
+(* ::Subsection:: *)
+(*Final Amplitude*)
+
+
+FinalAmplitude[{fields_List,amplitude_}]:=
+	If[DuplicateFreeQ[fields],
+		Return[{fields,amplitude}],
+		Module[{bosons={{}},fermions={{}},localfields=DeleteDuplicates[fields],localamplitude=amplitude,number,positions},
+			number=Length[localfields];
+			Do[
+				positions=Flatten[Position[fields,localfields[[i]]]];
+				If[
+					Length[positions]>1,
+					If[MemberQ[Join[GluonsM,GluonsP,Scalars],localfields[[i]]],AppendTo[bosons,positions]];
+					If[MemberQ[Join[FermionsP,FermionsP],localfields[[i]]],AppendTo[fermions,positions]]
+				],
+				{i,1,number}
+			];
+			localamplitude=MultipleSymmetrise[localamplitude,Sequence@@bosons];
+			localamplitude=MultipleSymmetrise[localamplitude,Sequence@@fermions,"AntiSymmetric"->True];
+			If[
+				MatchQ[localamplitude,0],
+				Return[Nothing],
+				Return[{fields,localamplitude}]
+			]
+		]
+	]
+
+
 End[]
 
 
@@ -177,7 +317,12 @@ SetAttributes[
 	Scalars,
 	Fields,
 	ColourSingletDoable,
-	CombinationsOfFields
+	CombinationsOfFields,
+	SU3singlet,
+	SU2singlet,
+	GaugeSinglets,
+	FullAmplitude,
+	FinalAmplitude
 	},
     Protected
 ]

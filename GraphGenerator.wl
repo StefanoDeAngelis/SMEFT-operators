@@ -181,10 +181,7 @@ IsGraphNonIntesercting[adjacencymatrix_List,OptionsPattern[]]:=
 	]
 
 
-End[]
-
-
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*All the Non-Intersecting Graphs*)
 
 
@@ -192,7 +189,7 @@ AllNonIntersectionGraphs[lines_List]:=
 	IsGraphNonIntesercting/@(GraphToMatrix/@AllGraphs[lines])
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Schouten = loosen crossings*)
 
 
@@ -244,7 +241,10 @@ SchoutenCrossing[adjacencymatrix_List]:=
 
 ellipseLayout[n_,{a_,b_}]:=Table[{a Cos[Pi-2 Pi/n *u],b Sin[Pi-2 Pi/n* u]},{u,1,n}];
 
-DrawAdjacencyGraph[adjacencymatrix_]:=AdjacencyGraph[#,VertexCoordinates->ellipseLayout[Length[#],{1,1}]]&/@adjacencymatrix
+DrawAdjacencyGraph[adjacencymatrix_]:=(AdjacencyGraph[#,VertexCoordinates->ellipseLayout[Length[#],{1,1}]])&@adjacencymatrix
+
+
+End[]
 
 
 (* ::Section:: *)
