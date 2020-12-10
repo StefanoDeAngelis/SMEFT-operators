@@ -36,12 +36,13 @@ DeltaSU2::usage = "..."
 RenameDummiesSU2::usage = "..."
 
 ContractSU2::usage = "..."
-JacobiSU2::usage = "..."
 
 FromMatricesToEpsilons::usage = "..."
 FromStructuresToEpsilonSU2::usage = "..."
+InvariantsSU2::usage = "..."
 
 LinearRelationsSU2::usage = "..."
+SubstitutionsSU2::usage = "..."
 
 aBox::usage = "..."
 bBox::usage = "..."
@@ -105,7 +106,7 @@ Begin["`su2`"]
 (*TODO:Check the coefficients of the substitutions*)*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Indices of fundamental representation*)
 
 
@@ -122,7 +123,7 @@ xBox[x_,n_]:=
 xLabel /: MakeBoxes[xLabel[x_,n_],StandardForm|TraditionalForm] := xBox[ToBoxes[x],ToBoxes[FromCharacterCode[n]]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Indices of the adjoint representation*)
 
 
@@ -139,7 +140,7 @@ XBox[x_]:=
 XLabel /: MakeBoxes[XLabel[x_],StandardForm|TraditionalForm] := XBox[ToBoxes[x]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Epsilon*)
 
 
@@ -150,7 +151,7 @@ EpsilonBoxSU2[a_, b_] :=
 EpsilonSU2 /: MakeBoxes[EpsilonSU2[a_, b_], StandardForm | TraditionalForm] := EpsilonBoxSU2[ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Delta (fundamental)*)
 
 
@@ -161,7 +162,7 @@ EpsilonBoxSU2[a_][b_] :=
 EpsilonSU2 /: MakeBoxes[EpsilonSU2[a_][b_], StandardForm | TraditionalForm] := EpsilonBoxSU2[ToBoxes[a]][ToBoxes[b]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Generators*)
 
 
@@ -184,7 +185,7 @@ TauBoxSU2[A_,a_, b_] :=
 TauSU2 /: MakeBoxes[TauSU2[A_,a_, b_], StandardForm | TraditionalForm] := TauBoxSU2[ToBoxes[A],ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Structure Constants*)
 
 
@@ -195,7 +196,7 @@ StructureBoxSU2[A_,B_, C_] :=
 StructureConstantSU2 /: MakeBoxes[StructureConstantSU2[A_,B_, C_], StandardForm | TraditionalForm] := StructureBoxSU2[ToBoxes[A],ToBoxes[B], ToBoxes[C]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Delta (adjoint)*)
 
 
@@ -206,7 +207,7 @@ DeltaBoxSU2[A_,B_] :=
 DeltaSU2 /: MakeBoxes[DeltaSU2[A_,B_], StandardForm | TraditionalForm] := DeltaBoxSU2[ToBoxes[A],ToBoxes[B]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Symmetry properties of building blocks*)
 
 
@@ -254,7 +255,7 @@ RenameDummiesSU2[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices in the fundamental*)
 
 
@@ -306,10 +307,20 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			
 		deltaadj=
 			{
-
+			DeltaSU2[A_,B_]TauSU2[C_,a_,b_]/;(B==C):>TauSU2[A,a,b],
+			(*DeltaSU2[A_,B_]TauSU2[C_,a_][b_]/;(B\[Equal]C)\[RuleDelayed]TauSU2[A,a][b],*)
+			DeltaSU2[A_,B_]TauSU2[C_,a_,b_]/;(A==C):>TauSU2[B,a,b],
+			
 			StructureConstantSU2[A_,B_,C_]DeltaSU2[D_,EE_] /; (C==EE):> StructureConstantSU2[A,B,D],
+			StructureConstantSU2[A_,B_,C_]DeltaSU2[D_,EE_] /; (B==EE):> StructureConstantSU2[A,D,C],
+			StructureConstantSU2[A_,B_,C_]DeltaSU2[D_,EE_] /; (A==EE):> StructureConstantSU2[D,B,C],
+			
+			
+			StructureConstantSU2[A_,B_,C_]StructureConstantSU2[D_,E_,F_]:>-(DeltaSU2[A,F]*DeltaSU2[B,E]*DeltaSU2[C,D])+DeltaSU2[A,E]*DeltaSU2[B,F]*DeltaSU2[C,D]+DeltaSU2[A,F]*DeltaSU2[B,D]*DeltaSU2[C,E]-DeltaSU2[A,D]*DeltaSU2[B,F]*DeltaSU2[C,E]-DeltaSU2[A,E]*DeltaSU2[B,D]*DeltaSU2[C,F]+DeltaSU2[A,D]*DeltaSU2[B,E]*DeltaSU2[C,F],
+
 
 			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==D):> DeltaSU2[A,B],
+			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==B):> DeltaSU2[A,D],
 
 			Power[DeltaSU2[A_,C_],2]:>3
 			};
@@ -319,32 +330,11 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 				Expand[ReplaceRepeated[#,deltaadj]]&,
 				localexp
 			];
+			
 		localexp=RenameDummiesSU2[localexp,dummylabel];
+		
 		Return[localexp];
 ]
-
-
-(* ::Subsubsection::Closed:: *)
-(*Jacobi identities*)
-
-
-JacobiSU2[exp_]:=
-	Module[{localexp=exp,jacobi},
-
-		jacobi=
-			(
-			StructureConstantSU2[A_,D_,E_]StructureConstantSU2[B_,C_,F_]/;(E==F)&&OrderedQ[{A,B,C,D}]:>StructureConstantSU2[A,C,E]StructureConstantSU2[B,D,E]-StructureConstantSU2[A,B,E]StructureConstantSU2[C,D,E]
-			);
-
-		localexp=
-			FixedPoint[
-				Expand[ReplaceRepeated[#,jacobi]]&,
-				localexp
-			];
-
-		Return[localexp];
-
-	]
 
 
 (* ::Subsubsection:: *)
@@ -352,18 +342,14 @@ JacobiSU2[exp_]:=
 
 
 (* ::Text:: *)
-(*Todo!!!*)
-
-
-(*StructureConstantSU2[A_,C_,EE_]StructureConstantSU2[B_,D_,F_]/;(EE\[Equal]F)\[RuleDelayed]-DeltaSU2[A,D]*DeltaSU2[B,C]+DeltaSU2[A,B]*DeltaSU2[C,D],*)
-(*StructureConstantSU2[A_,B_,C_]StructureConstantSU2[D_,EE_,F_] \[RuleDelayed] -(DeltaSU2[A,F]*DeltaSU2[B,EE]*DeltaSU2[C,D])+DeltaSU2[A,EE]*DeltaSU2[B,F]*DeltaSU2[C,D]+DeltaSU2[A,F]*DeltaSU2[B,D]*DeltaSU2[C,EE]-DeltaSU2[A,D]*DeltaSU2[B,F]*DeltaSU2[C,EE]-DeltaSU2[A,EE]*DeltaSU2[B,D]*DeltaSU2[C,F]+DeltaSU2[A,D]*DeltaSU2[B,EE]*DeltaSU2[C,F],*)
+(*Todo!!! For the SU(2) group it is enough a function which transforms a double epsilon into a combination of deltas. Otherwise the duplicates can be isolated using the Complement function for the two lists of three indices. For now this is implemented in ContractSU2*)
 
 
 (* ::Subsection:: *)
 (*Generation of independent invariant tensors*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*From the adjacency matrix to the associated epsilon structure*)
 
 
@@ -420,6 +406,22 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 ]
 
 
+(* ::Subsubsection:: *)
+(*From the representation structure to the (independent&simplified) invariant tensors*)
+
+
+Options[InvariantsSU2]={"Dummies"->0}
+
+InvariantsSU2[pointslines_List,OptionsPattern[]]:=
+	Module[{labelsadj=TakeLabels[DeleteCases[pointslines,_?(#[[2]]!=2&)]],biggest=Max[TakeLabels[pointslines]],invariants},
+		invariants=
+			SimplifyInvariants[
+				ContractSU2[#,Max[OptionValue["Dummies"],biggest]+1]&/@(Product[TauSU2[ILabel[i]][xLabel[i,120],xLabel[i,121]],{i,labelsadj}]*FromStructuresToEpsilonSU2[pointslines])
+			];
+		Return[invariants];
+	]
+
+
 (* ::Subsection:: *)
 (*Generation of the linear relations between invariant tensors*)
 
@@ -429,12 +431,16 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 (*TODO: implement the contraction in the functions above.*)*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Generation of the su(2) linear relations*)
 
 
-LinearRelationsSU2[pointslines_List]:=
-	Module[{localpointslines,numberfundlabels=0,lines,labels,numberpoints=Length[pointslines],intersecting,numberinter,nonintersecting,numbernoninter,replacements,graphlabels,generators,x,y},
+Options[LinearRelationsSU2]={"Dummies"->0}
+
+LinearRelationsSU2[pointslines_List,OptionsPattern[]]:=
+	Module[{localpointslines,numberfundlabels=0,lines,labels,labelsadj,numberpoints=Length[pointslines],biggestlabel,intersecting,numberinter,nonintersecting,numbernoninter,replacements,graphlabels,generators,x,y},
+	
+		If[pointslines=={},Return[{}]];
 
 		localpointslines=Sort[pointslines,#1[[2]]<=#2[[2]]&]; (*fundamental first!*)
 
@@ -442,11 +448,15 @@ LinearRelationsSU2[pointslines_List]:=
 		labels=Table[localpointslines[[i,1]],{i,1,numberpoints}];
 
 		numberfundlabels=Count[lines,1];
+		labelsadj=Table[labels[[i]],{i,numberfundlabels+1,numberpoints}];
+		biggestlabel=Max[labels];
 
 		intersecting=Map[PadLeft[#,numberpoints]&,Append[#,{}]&/@AllGraphs[lines],{2}]; (*generate all graphs*)
 
 		nonintersecting=IsGraphNonIntesercting/@intersecting; (*generate non-intersecting graphs*)
 		numbernoninter=Length[nonintersecting];
+		
+		If[numbernoninter==0,Return[{}]];
 
 		intersecting=Complement[intersecting,nonintersecting]; (*complement to take select the intersecting graphs*)
 		numberinter=Length[intersecting];
@@ -455,7 +465,8 @@ LinearRelationsSU2[pointslines_List]:=
 			Join[
 				Table[
 					intersecting[[i]]->x[i], (*assign labels to intersecting and intersecting graphs*)
-					{i,1,numberinter}
+					{i,1,numberinter} (*In this way the x and y definition can be shadowed when using this package.
+					I should find a better way to do this.*)
 				],
 				Table[
 					nonintersecting[[i]]->y[i], (*assign labels to intersecting and non-intersecting graphs*)
@@ -479,10 +490,17 @@ LinearRelationsSU2[pointslines_List]:=
 			
 		replacements=
 			Table[
-				FromMatricesToEpsilons[intersecting[[i]],labels,numberpoints,numberfundlabels]->
+				FromMatricesToEpsilons[intersecting[[i]],labels,numberpoints,numberfundlabels]-
 				Expand[x[i]//.replacements]/.nonintersecting,
 				{i,1,numberinter}
 			]; (*placing the repeated replacements inside the list speeds the function up*)
+			
+		replacements=ContractSU2[#,Max[OptionValue["Dummies"],biggestlabel]+1]&/@(Product[TauSU2[ILabel[i]][xLabel[i,120],xLabel[i,121]],{i,labelsadj}]*replacements); (*Contractions with the generators of the group and contractions*)
+		
+		replacements=
+			DeleteDuplicates[
+				If[NumberQ[#[[1,1]]],(#/#[[1,1]])//Expand,#]&/@DeleteCases[replacements,0] (*normalisations and repetitions are taken into account*)
+			];
 
 		Return[replacements];
 
@@ -490,6 +508,41 @@ LinearRelationsSU2[pointslines_List]:=
 
 
 End[]
+
+
+(* ::Subsubsection:: *)
+(*All Invariants of su(2) appearing in the linear relations*)
+
+
+Options[SubstitutionsSU2]={"Dummies"->0}
+
+SubstitutionsSU2[pointslines_List,OptionsPattern[]]:=
+	Module[{independent,num1,dependent,num2,linear=LinearRelationsSU2[pointslines,"Dummies"->OptionValue["Dummies"]],x,y,subs,substitutions},
+		If[linear=={},Return[{}]];
+		independent=InvariantsSU2[pointslines,"Dummies"->OptionValue["Dummies"]]; (*the first two lines speed up the computation of a factor 10^-2 for the cases where we do not have dependent invariants*)
+		dependent=
+			Complement[
+				DeleteDuplicates[
+					If[NumberQ[#[[1]]],(#/#[[1]])//Expand,#]&/@Flatten[linear/.Plus->List]
+				],
+				independent
+			];
+		num1=Length[independent];
+		num2=Length[dependent];
+		subs=
+			Join[
+				Thread[Rule[independent,Table[x[i],{i,num1}]]],
+				Thread[Rule[dependent,Table[y[i],{i,num2}]]]
+			];
+		substitutions=
+			Flatten[
+				Solve[
+					Thread[(linear/.subs)==Table[0,Length[linear]]],
+					Table[y[i],{i,num2}]
+				]/.(Reverse/@subs)//Expand
+			];
+		Return[substitutions];
+	]
 
 
 (* ::Section:: *)
@@ -503,7 +556,7 @@ Begin["`suN`"]
 (*Labels and building blocks*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Indices of the fundamental representation*)
 
 
@@ -521,7 +574,7 @@ aLabel /: MakeBoxes[aLabel[x_],StandardForm|TraditionalForm] :=aBox[ToBoxes[x]]
 bLabel /: MakeBoxes[bLabel[x_],StandardForm|TraditionalForm] :=bBox[ToBoxes[x]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Indices of the adjoint representation*)
 
 
@@ -538,7 +591,7 @@ CBox[x_]:=
 CLabel /: MakeBoxes[CLabel[x_],StandardForm|TraditionalForm] := CBox[ToBoxes[x]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Generators*)
 
 
@@ -549,7 +602,7 @@ TauBoxSU3[A_,a_, b_] :=
 TauSU3 /: MakeBoxes[TauSU3[A_,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[ToBoxes[A],ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Delta*)
 
 
@@ -560,7 +613,7 @@ DeltaBoxSU3[a_, b_] :=
 DeltaSU3 /: MakeBoxes[DeltaSU3[a_, b_], StandardForm | TraditionalForm] := DeltaBoxSU3[ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Delta (adjoint)*)
 
 
@@ -571,7 +624,7 @@ DeltaAdjBoxSU3[A_, B_] :=
 DeltaAdjSU3 /: MakeBoxes[DeltaAdjSU3[A_, B_], StandardForm | TraditionalForm] := DeltaAdjBoxSU3[ToBoxes[A], ToBoxes[B]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Structure constants*)
 
 
@@ -582,7 +635,7 @@ StructureBoxSU3[A_, B_,C_] :=
 StructureConstantSU3 /: MakeBoxes[StructureConstantSU3[A_, B_,C_], StandardForm | TraditionalForm] := StructureBoxSU3[ToBoxes[A], ToBoxes[B],ToBoxes[C]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*d-tensors*)
 
 
@@ -612,7 +665,7 @@ TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Rename dummies*)
 
 
@@ -631,7 +684,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices*)
 
 
@@ -650,10 +703,12 @@ ContractSU3[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			DeltaAdjSU3[A_,B_] /; (A==B) :> 8,
 
 			StructureConstantSU3[A_,B_,C_]DeltaAdjSU3[D_,EE_] /; (C==EE):> StructureConstantSU3[A,B,D],
+			
+			TauSU3[A_,a_,b_]DeltaAdjSU3[B_,C_]/;(C==A):>TauSU3[B,a,b],
 
 			TensorDSU3[A_,B_,C_] DeltaAdjSU3[D_,EE_]/;(C==EE):>TensorDSU3[A,B,D],
 
-		DeltaAdjSU3[A_,C_] DeltaAdjSU3[B_,EE_]/;(C==EE):>DeltaAdjSU3[A,B]
+			DeltaAdjSU3[A_,C_] DeltaAdjSU3[B_,EE_]/;(C==EE):>DeltaAdjSU3[A,B]
 			};
 		decompositiongenerators=
 			{
@@ -683,7 +738,7 @@ ContractSU3[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 (*Todo: understand whether the "normandsymm" relations and their generalisations are needed for higher-dimension representations*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Jacobi identities*)
 
 
@@ -706,8 +761,11 @@ JacobiSU3[exp_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Independent adjoint structures with four free indices*)
+
+
+(*TODO: avoid the repeated replacement but give a general one with a DuplicateFreeQ conditions and Signature for the sign from the different ordering*)
 
 
 IndependentAdjSU3[exp_]:=
@@ -735,7 +793,7 @@ IndependentAdjSU3[exp_]:=
 (*Generation of the independent invariant tensors*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Adjoint constraint (on delta representation of the invariats)*)
 
 
@@ -753,7 +811,7 @@ ToDelta[{l1_,l2_}]:=DeltaSU3[aLabel[l1],bLabel[l2]]
 PairingsToDelta[listofpairings_List]:=ToDelta/@listofpairings
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*All invariants (list form)*)
 
 
@@ -829,30 +887,28 @@ SimplifyInvariants[list_List]:=
 
 
 (* ::Subsection::Closed:: *)
-(*Relations between the SU(3) invariants up to dimension 11 SMEFT operators (up to dimension 9 for the moment)*)
+(*Relations between the SU(3) invariants up to dimension 9 SMEFT operators (up to dimension 9 for the moment)*)
 
 
-AllIdentitiesSU3[labelsfund_List,labelsantif_List]:=
-	Module[{labelsadj=Intersection[labelsfund,labelsantif],dummies=Max[Join[labelsfund,labelsantif]]+1,nA,nF=Length[Complement[labelsfund,labelsantif]],delta,identities}, (*Maybe the intersection/complement step can be eliminated, but I left it for now, because we are not interested in simple cases so far.*)
+AllIdentitiesSU3[labelsrepresentations_List]:=
+	Module[{labelsfund,labelsantif,labelsadj,dummies,nA,nF,delta,identities},
+		labelsfund=TakeLabels[Select[labelsrepresentations,#[[2]]==1&]];
+		labelsantif=TakeLabels[Select[labelsrepresentations,#[[2]]==-1&]];
+		labelsadj=TakeLabels[Select[labelsrepresentations,#[[2]]==0&]];
+		dummies=Max[Join[labelsfund,labelsantif,labelsadj]]+1;
 		nA=Length[labelsadj];
-		delta=
-			Times@@
-				ToDelta/@
-					Transpose[{labelsfund,labelsantif}];
-		If[nA+nF<4,Print["No identities, man!"]];
-		If[
-			nA+nF==4,
-			identities=4!*AdjConstraint[
-				Symmetrise[delta,bLabel/@labelsantif,"AntiSymmetric"->True]
-				]//Expand;
+		nF=Length[labelsfund];
+		labelsfund=Join[labelsfund,labelsadj];
+		labelsantif=Join[labelsantif,labelsadj];
+		delta=Times@@ToDelta/@Transpose[{labelsfund, labelsantif}];
+		If[nA+nF<4,Return[{}]];
+		If[nA+nF==4, 
+			identities=4!*AdjConstraint[Symmetrise[delta,bLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
 			identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
-			identities=IndependentAdjSU3[ContractSU3[identities,dummies]];
+			identities=ContractSU3[IndependentAdjSU3[ContractSU3[identities,dummies]],dummies];
 			Return[identities];
 		];
-		If[
-			nA+nF>5,
-			Print["Wait! Not so fast, man!"]
-		];
+		If[nA + nF > 5, Print["Wait! Not so fast, man!"]];
 	]
 
 
@@ -890,10 +946,11 @@ SetAttributes[
 	DeltaSU2,
 	RenameDummiesSU2,
 	ContractSU2,
-	JacobiSU2,
 	FromMatricesToEpsilons,
 	FromStructuresToEpsilonSU2,
+	InvariantsSU2,
 	LinearRelationsSU2,
+	SubstitutionsSU2,
 	aBox,
 	aLabel,
 	bBox,

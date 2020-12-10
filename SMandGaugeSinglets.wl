@@ -4,7 +4,7 @@
 (*SM Fields and Gauge Singlets*)
 
 
-BeginPackage["SMandGaugeSinglets`",{"SUInvariants`","YoungSymm`"}]
+BeginPackage["SMandGaugeSinglets`",{"HelicityStructures`","SUInvariants`","YoungSymm`"}]
 
 
 (* ::Section:: *)
@@ -51,8 +51,8 @@ SU3singlet::usage = "..."
 SU2singlet::usage = "..."
 GaugeSinglets::usage = "..."
 
-FullAmplitude::usage = "..."
 FinalAmplitude::usage = "..."
+IdentitiesBetweenAmplitudes::usage = "..."
 
 
 (* ::Section:: *)
@@ -73,15 +73,15 @@ TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm-
 (*Fields order*)
 
 
-OrderingRule={GGp,GGm,WWp,WWm,BBp,BBm,QQ,uu,dd,LL,ee,QBar,uBar,dBar,LBar,eBar,HH,HBar}
+OrderingRule={BBm,GGm,WWm,BBp,GGp,WWp,QBar,uBar,dBar,LBar,eBar,QQ,uu,dd,LL,ee,HBar,HH}
 
 
 (* ::Subsection:: *)
 (*Fields and their helicity configuration*)
 
 
-GluonsP={GGp,WWp,BBp}
-GluonsM={GGm,WWm,BBm}
+GluonsP={BBp,GGp,WWp}
+GluonsM={BBm,GGm,WWm}
 FermionsP={QQ,uu,dd,LL,ee}
 FermionsM={QBar,uBar,dBar,LBar,eBar}
 Scalars={HH,HBar}
@@ -197,7 +197,7 @@ SU2singlet[replist_List]:=
 Options[GaugeSinglets]={"RenormalisableTree"->False}
 
 GaugeSinglets[fields_List,OptionsPattern[]]:=
-	Module[{singlets,adjointSU3,adjointSU2},
+	Module[{singlets,adjointSU3(*,adjointSU2*)},
 		singlets=
 			Transpose[
 				ReplaceAll[fields,TransformationRules]
@@ -219,32 +219,17 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 							SU3singlet[singlets[[1]]]
 						])
 			];
-		adjointSU2=Flatten[Position[singlets[[2]],adj]];
-		singlets[[2]]=
-			SimplifyInvariants[
+		(*adjointSU2=Flatten[Position[singlets[[2]],adj]];*)
+		singlets[[2]]=InvariantsSU2[SU2singlet[singlets[[2]]],"Dummies"->Length[fields]];
+			(*SimplifyInvariants[
 				ContractSU2[#,Length[fields]+1]&/@
 					(Product[TauSU2[ILabel[i]][xLabel[i,120],xLabel[i,121]],{i,adjointSU2}]
 						FromStructuresToEpsilonSU2[
 							SU2singlet[singlets[[2]]]
 						])
-			];
+			];*)
 		singlets=Map[(Times@@#)&,Tuples[singlets],{1}];
 		Return[singlets];
-	]
-
-
-(* ::Subsection:: *)
-(*Full Amplitude*)
-
-
-Options[FullAmplitude]={"RenormalisableTree"->False}
-
-FullAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
-	Module[{colourfactors=GaugeSinglets[fields,"RenormalisableTree"->OptionValue["RenormalisableTree"]],amplitudes},
-		If[colourfactors==Null,Return[Nothing]];
-		amplitudes=Thread[Times[colourfactors,helicity]];
-		amplitudes=Table[{fields,amplitudes[[i]]},{i,1,Length[amplitudes]}];
-		Return[amplitudes];
 	]
 
 
@@ -252,28 +237,70 @@ FullAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
 (*Final Amplitude*)
 
 
-FinalAmplitude[{fields_List,amplitude_}]:=
-	If[DuplicateFreeQ[fields],
-		Return[{fields,amplitude}],
-		Module[{bosons={{}},fermions={{}},localfields=DeleteDuplicates[fields],localamplitude=amplitude,number,positions},
-			number=Length[localfields];
-			Do[
-				positions=Flatten[Position[fields,localfields[[i]]]];
-				If[
-					Length[positions]>1,
-					If[MemberQ[Join[GluonsM,GluonsP,Scalars],localfields[[i]]],AppendTo[bosons,positions]];
-					If[MemberQ[Join[FermionsP,FermionsP],localfields[[i]]],AppendTo[fermions,positions]]
-				],
-				{i,1,number}
+Options[FinalAmplitude]={"RenormalisableTree"->False}
+
+FinalAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
+	Module[{colourfactors=GaugeSinglets[fields,"RenormalisableTree"->OptionValue["RenormalisableTree"]],amplitudes},
+		If[colourfactors==Null,Return[Nothing]];
+		amplitudes=Thread[Times[colourfactors,helicity]];
+		If[\[Not]DuplicateFreeQ[fields],
+			Module[{bosons={{}},fermions={{}},localfields=DeleteDuplicates[fields],localamplitudes=amplitudes,number,positions},
+				number=Length[localfields];
+				Do[
+					positions=Flatten[Position[fields,localfields[[i]]]];
+					If[
+						Length[positions]>1,
+						If[MemberQ[Join[GluonsM,GluonsP,Scalars],localfields[[i]]],AppendTo[bosons,positions]];
+						If[MemberQ[Join[FermionsM,FermionsP],localfields[[i]]],AppendTo[fermions,positions]]
+					],
+					{i,1,number}
+				];
+				localamplitudes=MultipleSymmetrise[#,Sequence@@bosons]&/@localamplitudes;
+				localamplitudes=MultipleSymmetrise[#,Sequence@@fermions,"AntiSymmetric"->True]&/@localamplitudes;
+				amplitudes=DeleteCases[localamplitudes,_?PossibleZeroQ];
 			];
-			localamplitude=MultipleSymmetrise[localamplitude,Sequence@@bosons];
-			localamplitude=MultipleSymmetrise[localamplitude,Sequence@@fermions,"AntiSymmetric"->True];
+		];
+		amplitudes=Table[{fields,amplitudes[[i]]},{i,1,Length[amplitudes]}];
+		Return[amplitudes]
+	]
+
+
+(* ::Subsubsection:: *)
+(*Identities Between Amplitudes*)
+
+
+(* ::Text:: *)
+(*The SU(3) are not implemented yet! TODO!!!*)
+
+
+IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
+	Module[{singlets,num=Length[fields],localoperators,count,independent={}},
+		If[Length[operators]==1||DuplicateFreeQ[fields],Return[{{fields},operators}]];
+		localoperators=Expand[operators/.{Spinoranglebracket[i_,k_]Spinorsquarebracket[j_,l_]/;l==k==num:>-Sum[Spinoranglebracket[i,p]Spinorsquarebracket[j,p],{p,1,num-1}]}];
+		count=AngleSquareCount[#,num]&/@localoperators;
+		count=AngleSquareSchouten[DeleteDuplicates[count]];
+		localoperators=localoperators/.count//Expand;
+		singlets=
+			Drop[
+				Transpose[
+					ReplaceAll[fields,TransformationRules]
+				],
+				-1
+			];
+		singlets={AllIdentitiesSU3[SU3singlet[singlets[[1]]]],SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]};
+		singlets=Flatten[Drop[singlets,1]];
+		localoperators=localoperators/.singlets//Expand;
+		Do[
 			If[
-				MatchQ[localamplitude,0],
-				Return[Nothing],
-				Return[{fields,localamplitude}]
-			]
-		]
+				\[Not]MatchQ[
+					Simplify[localoperators[[i]],Table[localoperators[[j]]==0,{j,1,i-1}]],
+					0
+				],
+				AppendTo[independent,operators[[i]]];
+			],
+			{i,1,Length[localoperators]}
+		];
+		Return[{{fields},independent}];
 	]
 
 
@@ -321,8 +348,8 @@ SetAttributes[
 	SU3singlet,
 	SU2singlet,
 	GaugeSinglets,
-	FullAmplitude,
-	FinalAmplitude
+	FinalAmplitude,
+	IdentitiesBetweenAmplitudes
 	},
     Protected
 ]

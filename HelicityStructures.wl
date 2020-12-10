@@ -31,6 +31,10 @@ MatterContent::usage = "..."
 IndependentHelicityFactors::usage = "..."
 
 SchoutenIdentities::usage = "..."
+AngleCount::usage = "..."
+SquareCount::usage = "..."
+AngleSquareCount::usage = "..."
+AngleSquareSchouten::usage = "..."
 
 
 (* ::Section:: *)
@@ -44,7 +48,7 @@ Begin["`Classification`"]
 (*General structures*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Primary Amplitudes (spin classification)*)
 
 
@@ -57,7 +61,7 @@ PrimaryAmplitudeHelicityFields[d_]:= (*This function generates all the possible 
 	1]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Primary Amplitudes (helicity configuration)*)
 
 
@@ -76,7 +80,7 @@ PrimaryAmplitudeHelicity[d_]:= (*A more refined version of the previous function
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Amplitude structures (with derivatives)*)
 
 
@@ -100,7 +104,7 @@ AmplitudesStructure[d_]:= (*This function assign all the compatible derivative n
 	1]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Amplitudes structures (with scalars)*)
 
 
@@ -117,7 +121,7 @@ AmplitudesScalars[d_]:=
 (*Helicity and momentum structures*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Helicity structure*)
 
 
@@ -145,7 +149,7 @@ HelicityStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Partition of momenta*)
 
 
@@ -162,14 +166,15 @@ PartitionMomenta[moms_,partition_]:= (*Given a certain partition and a list of m
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Momenta Selection*)
 
 
 MomentaSelection[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*generates all the independent momenta, their corresponding partitions of partitions and assign all of them to the lists of momenta*)
 	Module[{scals=d-2(gluonsM+gluonsP)-3/2*(fermM+fermP)-ders,moms,partitions,numberfields},
 		numberfields=gluonsM+gluonsP+fermM+fermP+scals;
-		moms=Table[i,{i,1,numberfields-1}];(*momentum conservation*)
+		moms=Table[i,{i,1,numberfields-1}];(*momentum conservation is not taken into account simply by eliminating the last momentum. There are cases (for d\[GreaterEqual]7) where the last momentum gives automatically zero,
+		and then we need to exclude the second last momentum, and so forth.*)
 		partitions=
 			Flatten[
 				Permutations/@
@@ -182,7 +187,7 @@ MomentaSelection[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*generates 
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Spinor structures*)
 
 
@@ -206,6 +211,16 @@ SpinorStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*appends the
 
 
 (* ::Subsubsection:: *)
+(*Is Momentum Conservation implemented correctly?*)
+
+
+(*One way to check if momentum conservation is implemented just by not taking into account the momentum of the last field is to generate a graph with a number of
+completely general momenta (which in the graph are set between the last and the second last). Once all the structures are generated one could check if they vanish
+once we substitute them with the last momentum. If one of them vanishes, then it has to be check if with the second last momentum it also vanishes, and so forth, until
+we find a non-vanishing one. Drawing and explanation on the tablet, paper "2,84,30,993... by Henning"*)
+
+
+(* ::Subsubsection::Closed:: *)
 (*Counts to list*)
 
 
@@ -216,7 +231,7 @@ CountsToList[list_List]:= (*counts the number of times each distinct element app
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Is a singlet doable?*)
 
 
@@ -258,7 +273,7 @@ End[]
 Begin["`FormFactors`"]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*(Generic) Bracket*)
 
 
@@ -272,7 +287,7 @@ Bracket /: MakeBoxes[Bracket[a_, b_], StandardForm | TraditionalForm] := Bracket
 Bracket[a_,b_]/;\[Not]OrderedQ[{a,b}]:=-Bracket[b,a]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From Adjacency Matrix to Spinor Formula*)
 
 
@@ -289,7 +304,7 @@ FromMatrixToSpinors[adjacencymatrix_List,labels_List]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From structures to brackets*)
 
 
@@ -334,7 +349,7 @@ AnglesAndSquares[{anglestructure_List,squarestructure_List}]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Matter Content*)
 
 
@@ -348,7 +363,7 @@ MatterContent[d_,helicityfactor_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Independent Helicity Factors*)
 
 
@@ -371,12 +386,16 @@ IndependentHelicityFactors[d_,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Schouten Identities*)
 
 
-SchoutenIdentities[pointslines_List]:=
+Options[SchoutenIdentities]={"Substitutions"->True};
+
+SchoutenIdentities[pointslines_List,OptionsPattern[]]:=
 	Module[{lines,labels,numberpoints=Length[pointslines],intersecting,numberinter,nonintersecting,numbernoninter,replacements,graphlabels,x,y},
+	
+		If[pointslines=={},Return[{}]];
 
 		lines=Table[pointslines[[i,2]],{i,1,numberpoints}];
 		labels=Table[pointslines[[i,1]],{i,1,numberpoints}];
@@ -419,13 +438,83 @@ SchoutenIdentities[pointslines_List]:=
 			
 		replacements=
 			Table[
-				FromMatrixToSpinors[intersecting[[i]],labels] -> Expand[x[i]//.replacements]/.nonintersecting,
+				If[
+					OptionValue["Substitutions"],
+					FromMatrixToSpinors[intersecting[[i]],labels] -> Expand[x[i]//.replacements]/.nonintersecting,
+					FromMatrixToSpinors[intersecting[[i]],labels] - (Expand[x[i]//.replacements]/.nonintersecting)==0 (*some of these are present multiple times, DeleteDuplicates is need or something else. This happens when the angle structures are the same but the squares are different*)
+				],
 				{i,1,numberinter}
 			]; (*placing the repeated replacements inside the list speeds the function up*)
 
 		Return[replacements];
 
 ]
+
+
+(* ::Subsubsection::Closed:: *)
+(*Counting angles and squares*)
+
+
+AngleCount[exp_,label_]:=
+	Join[
+		Cases[
+			{exp},
+			HoldPattern[SpinorAngleBracket[label,_]|SpinorAngleBracket[_,label]]:>1,
+			\[Infinity]
+		](*,
+		Cases[
+			{exp},
+			HoldPattern[S[label,_]|S[_,label]]\[RuleDelayed]1,
+			\[Infinity]
+		]*)
+	]//Length;
+	
+SquareCount[exp_,label_]:=
+	Join[
+		Cases[
+			{exp},
+			HoldPattern[SpinorSquareBracket[label,_]|SpinorSquareBracket[_,label]]:>1,
+			\[Infinity]
+		](*,
+		Cases[
+			{exp},
+			HoldPattern[S[label,_]|S[_,label]]\[RuleDelayed]1,
+			\[Infinity]
+		]*)
+	]//Length;
+	
+AngleSquareCount[exp_Plus,length_Integer]:=Sequence@@DeleteDuplicates[AngleSquareCount[#,length]&/@(List@@exp)];
+
+AngleSquareCount[exp_,length_Integer]:=
+	Module[{angles,squares},
+		angles=
+			DeleteCases[
+				Table[{i,AngleCount[exp,i]},{i,length}],
+				_?(#[[2]]==0&)
+			];
+		squares=
+			DeleteCases[
+				Table[{i,SquareCount[exp,i]},{i,length}],
+				_?(#[[2]]==0&)
+			];
+		Return[List[angles,squares]];
+	]
+
+
+(* ::Subsubsection::Closed:: *)
+(*Schouten for angles and squares*)
+
+
+Options[AngleSquareSchouten]={"Substitutions"->True}
+
+AngleSquareSchouten[count_List,OptionsPattern[]]:=
+	Module[{schouten},
+		schouten=Flatten/@Transpose[Map[SchoutenIdentities[#,"Substitutions"->OptionValue["Substitutions"]]&,count,{2}]];
+		schouten[[1]]=schouten[[1]]/.{Bracket->SpinorAngleBracket};
+		schouten[[2]]=schouten[[2]]/.{Bracket->SpinorSquareBracket};
+		schouten=Flatten[schouten];
+		Return[schouten];
+	]
 
 
 End[]
@@ -456,7 +545,11 @@ SetAttributes[
 	AnglesAndSquares,
 	MatterContent,
 	IndependentHelicityFactors,
-	SchoutenIdentities
+	SchoutenIdentities,
+	AngleCount,
+	SquareCount,
+	AngleSquareCount,
+	AngleSquareSchouten
     },
     Protected
 ]
