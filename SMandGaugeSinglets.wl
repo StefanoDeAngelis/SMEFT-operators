@@ -273,6 +273,7 @@ FinalAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
 
 (* ::Text:: *)
 (*The SU(3) are not implemented yet! TODO!!!*)
+(*This function has also to take into account the additional momentum conservation identities! TODO!!!*)
 
 
 IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
