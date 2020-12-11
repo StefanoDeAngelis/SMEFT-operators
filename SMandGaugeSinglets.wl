@@ -4,7 +4,7 @@
 (*SM Fields and Gauge Singlets*)
 
 
-BeginPackage["SMandGaugeSinglets`",{"HelicityStructures`","SUInvariants`","YoungSymm`"}]
+BeginPackage["SMandGaugeSinglets`",{"SpinorHelicity6D`","HelicityStructures`","SUInvariants`","YoungSymm`"}]
 
 
 (* ::Section:: *)
@@ -54,6 +54,8 @@ GaugeSinglets::usage = "..."
 FinalAmplitude::usage = "..."
 IdentitiesBetweenAmplitudes::usage = "..."
 
+AllOperators::usage = "..."
+
 
 (* ::Section:: *)
 (*Private*)
@@ -62,21 +64,21 @@ IdentitiesBetweenAmplitudes::usage = "..."
 Begin["`Private`"]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Transformation rules*)
 
 
 TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm->{adj,sing,0},WWm->{sing,adj,0},BBm->{sing,sing,0},QQ->{fund,fund,1/6},uu->{afund,sing,-(2/3)},dd->{afund,sing,1/3},LL->{sing,fund,-(1/2)},ee->{sing,sing,1},QBar->{afund,fund,-(1/6)},uBar->{fund,sing,2/3},dBar->{fund,sing,-(1/3)},LBar->{sing,fund,1/2},eBar->{sing,sing,-1},HH->{sing,fund,1/2},HBar->{sing,fund,-(1/2)}}
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Fields order*)
 
 
 OrderingRule={BBm,GGm,WWm,BBp,GGp,WWp,QBar,uBar,dBar,LBar,eBar,QQ,uu,dd,LL,ee,HBar,HH}
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Fields and their helicity configuration*)
 
 
@@ -88,7 +90,7 @@ Scalars={HH,HBar}
 Fields={GluonsM,GluonsP,FermionsM,FermionsP,Scalars};
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Is a gauge singlet doable?*)
 
 
@@ -115,7 +117,7 @@ ColourSingletDoable[fields_List]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Combinations of fields*)
 
 
@@ -144,7 +146,7 @@ CombinationsOfFields[listNumbers_List]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*SU(3) singlet*)
 
 
@@ -169,7 +171,7 @@ SU3singlet[replist_List]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*SU(2) singlet*)
 
 
@@ -274,9 +276,9 @@ FinalAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
 
 
 IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
-	Module[{singlets,num=Length[fields],localoperators,count,independent={}},
+	Module[{singlets,num=Length[fields],localoperators,count,independent={operators[[1]]}},
 		If[Length[operators]==1||DuplicateFreeQ[fields],Return[{{fields},operators}]];
-		localoperators=Expand[operators/.{Spinoranglebracket[i_,k_]Spinorsquarebracket[j_,l_]/;l==k==num:>-Sum[Spinoranglebracket[i,p]Spinorsquarebracket[j,p],{p,1,num-1}]}];
+		localoperators=Expand[operators/.{SpinorAngleBracket[i_,l_]SpinorSquareBracket[j_,k_]/;(l==k==num):>-Sum[SpinorAngleBracket[i,p]SpinorSquareBracket[j,p],{p,1,num-1}]}];(*powers???*)
 		count=AngleSquareCount[#,num]&/@localoperators;
 		count=AngleSquareSchouten[DeleteDuplicates[count]];
 		localoperators=localoperators/.count//Expand;
@@ -298,9 +300,34 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 				],
 				AppendTo[independent,operators[[i]]];
 			],
-			{i,1,Length[localoperators]}
+			{i,2,Length[localoperators]}
 		];
 		Return[{{fields},independent}];
+	]
+
+
+(* ::Subsubsection:: *)
+(*All Operators*)
+
+
+AllOperators[d_]:=
+	Module[{matter,helicityfactor,ops},
+		{matter,helicityfactor}=Transpose[(*IndependentHelicityFactors[d]*)TestMomentumConservation[d]];
+		matter=CombinationsOfFields/@matter;
+		ops=
+			Flatten[
+				Thread/@
+					(If[MatchQ[#[[1]],{}],Nothing,#]&/@Transpose[List[matter,helicityfactor]]),
+				1
+			];
+		ops=Flatten[FinalAmplitude/@ops,1];
+		ops=Map[DeleteDuplicates,Transpose/@GatherBy[ops,First],{2}];
+		ops=
+			Flatten[
+				Tuples/@(IdentitiesBetweenAmplitudes/@ops),
+				1
+			];
+		Return[ops];
 	]
 
 
@@ -349,7 +376,8 @@ SetAttributes[
 	SU2singlet,
 	GaugeSinglets,
 	FinalAmplitude,
-	IdentitiesBetweenAmplitudes
+	IdentitiesBetweenAmplitudes,
+	AllOperators
 	},
     Protected
 ]

@@ -36,6 +36,10 @@ SquareCount::usage = "..."
 AngleSquareCount::usage = "..."
 AngleSquareSchouten::usage = "..."
 
+MomentumConservationIdentities::usage = "..."
+IdentitiesBetweenKinematics::usage = "..."
+TestMomentumConservation::usage = "..."
+
 
 (* ::Section:: *)
 (*Classification*)
@@ -210,16 +214,6 @@ SpinorStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*appends the
 	]
 
 
-(* ::Subsubsection:: *)
-(*Is Momentum Conservation implemented correctly?*)
-
-
-(*One way to check if momentum conservation is implemented just by not taking into account the momentum of the last field is to generate a graph with a number of
-completely general momenta (which in the graph are set between the last and the second last). Once all the structures are generated one could check if they vanish
-once we substitute them with the last momentum. If one of them vanishes, then it has to be check if with the second last momentum it also vanishes, and so forth, until
-we find a non-vanishing one. Drawing and explanation on the tablet, paper "2,84,30,993... by Henning"*)
-
-
 (* ::Subsubsection::Closed:: *)
 (*Counts to list*)
 
@@ -322,7 +316,7 @@ FromStructuresToSpinors[pointslines_List]:= (*given the number of labels of the 
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From bracket to Spinor Helicity*)
 
 
@@ -517,6 +511,77 @@ AngleSquareSchouten[count_List,OptionsPattern[]]:=
 	]
 
 
+(* ::Subsubsection:: *)
+(*Is Momentum Conservation implemented correctly?*)
+
+
+MomentumConservationIdentities[length_Integer,sign_]:=
+	If[
+		sign>0,
+		Table[Sum[SpinorAngleBracket[i,k]SpinorSquareBracket[k,length],{k,1,length-1}]==0,{i,1,length-1}],
+		If[
+			sign<0,
+			Table[Sum[SpinorAngleBracket[length,k]SpinorSquareBracket[k,i],{k,1,length-1}]==0,{i,1,length-1}],
+			{}
+		]
+	]
+
+(*IdentitiesBetweenKinematics[{{fields_},operators_}]:=
+	Module[{num=Total[fields],lasthelicity,helicities={-2,2,-1,1,0},weights={2,2,3/2,3/2,1},schouten,momcons={},dependent={},ders},
+		ders=MassDimension[operators[[1]]]+num-Sum[fields[[i]]*weights[[i]],{i,1,5}];
+		If[Length[operators]\[Equal]1||ders\[Equal]0,Return[{{fields},dependent}]];
+		Do[If[fields[[5-j]]\[NotEqual]0,lasthelicity=5-j;Break[]],{j,0,4}];
+		lasthelicity=helicities[[lasthelicity]];
+		schouten=AngleSquareCount[#,num]&/@operators;
+		schouten=AngleSquareSchouten[DeleteDuplicates[schouten],"Substitutions"\[Rule]False];
+		momcons=MomentumConservationIdentities[num,lasthelicity];
+		If[ders>2,momcons=Join[momcons,{Sum[\[LeftAngleBracket]j\[MediumSpace]i\[RightAngleBracket][i\[MediumSpace]j],{i,1,num-1},{j,i+1,num-1}]\[Equal]0}]];
+		Do[
+			If[
+				MatchQ[
+					Simplify[operators[[i]],Join[Table[operators[[j]]\[Equal]0,{j,1,i-1}],schouten,momcons]],
+					0
+				],
+				AppendTo[dependent,operators[[i]]];
+			],
+			{i,1,Length[operators]}
+		];
+		Return[{{fields},dependent}];
+	]*)
+	
+IdentitiesBetweenKinematics[{{fields_},operators_}]:=
+	Module[{num=Total[fields],lasthelicity,helicities={-2,2,-1,1,0},weights={2,2,3/2,3/2,1},schouten,momcons={},independent={operators[[1]]},ders},
+		ders=MassDimension[operators[[1]]]+num-Sum[fields[[i]]*weights[[i]],{i,1,5}];
+		If[Length[operators]==1||ders==0,Return[{{fields},operators}]];
+		Do[If[fields[[5-j]]!=0,lasthelicity=5-j;Break[]],{j,0,4}];
+		lasthelicity=helicities[[lasthelicity]];
+		schouten=AngleSquareCount[#,num]&/@operators;
+		schouten=AngleSquareSchouten[DeleteDuplicates[schouten],"Substitutions"->False];
+		momcons=MomentumConservationIdentities[num,lasthelicity];
+		If[ders>=2,momcons=Join[momcons,{Sum[SpinorAngleBracket[j,i]SpinorSquareBracket[i,j],{i,1,num-1},{j,i+1,num-1}]==0}]];
+		Do[
+			If[
+				\[Not]MatchQ[
+					Simplify[operators[[i]],Join[Table[operators[[j]]==0,{j,1,i-1}],schouten,momcons]],
+					0
+				],
+				AppendTo[independent,operators[[i]]];
+			],
+			{i,2,Length[operators]}
+		];
+		Return[{{fields},independent}];
+	]
+	
+TestMomentumConservation[d_]:=
+	Module[{ff=IndependentHelicityFactors[d]},
+		ff=Map[DeleteDuplicates,Transpose/@GatherBy[ff,First],{2}];
+		ff=IdentitiesBetweenKinematics/@ff;
+		(*ff=If[#[[2]]=={},Nothing,#]&/@ff;*)
+		ff=Flatten[Tuples/@ff,1];
+		Return[ff]
+	]
+
+
 End[]
 
 
@@ -549,7 +614,10 @@ SetAttributes[
 	AngleCount,
 	SquareCount,
 	AngleSquareCount,
-	AngleSquareSchouten
+	AngleSquareSchouten,
+	MomentumConservationIdentities,
+	IdentitiesBetweenKinematics,
+	TestMomentumConservation
     },
     Protected
 ]
