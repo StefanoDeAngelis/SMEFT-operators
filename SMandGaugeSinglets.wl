@@ -64,14 +64,14 @@ AllOperators::usage = "..."
 Begin["`Private`"]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Transformation rules*)
 
 
 TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm->{adj,sing,0},WWm->{sing,adj,0},BBm->{sing,sing,0},QQ->{fund,fund,1/6},uu->{afund,sing,-(2/3)},dd->{afund,sing,1/3},LL->{sing,fund,-(1/2)},ee->{sing,sing,1},QBar->{afund,fund,-(1/6)},uBar->{fund,sing,2/3},dBar->{fund,sing,-(1/3)},LBar->{sing,fund,1/2},eBar->{sing,sing,-1},HH->{sing,fund,1/2},HBar->{sing,fund,-(1/2)}}
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Fields order*)
 
 
@@ -109,7 +109,7 @@ ColourSingletDoable[fields_List]:=
 		fundSU2=Count[tensorstructure[[2]],fund];
 		charge=Total[tensorstructure[[3]]];
 		If[
-			((fundSU3==0&&afundSU3==0&&adjointSU3!=1)||(fundSU3!=0&&fundSU3==afundSU3))&&((fundSU2==0&&adjointSU2!=1)||(fundSU2!=0&&EvenQ[fundSU2]))&&
+			((fundSU3==0&&afundSU3==0&&adjointSU3!=1)||(Mod[fundSU3-afundSU3,3]==0))&&((fundSU2==0&&adjointSU2!=1)||(fundSU2!=0&&EvenQ[fundSU2]))&&
 			charge==0, (*singlet conditions*)
 			Return[fields],
 			Return[Nothing];
@@ -192,7 +192,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Gauge Singlets*)
 
 
@@ -290,8 +290,8 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 				],
 				-1
 			];
-		singlets={AllIdentitiesSU3[SU3singlet[singlets[[1]]]],SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]};
-		singlets=Flatten[Drop[singlets,1]];
+		singlets={(*AllIdentitiesSU3[SU3singlet[singlets[[1]]]],*)SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]};
+		singlets=Flatten[(*Drop[*)singlets(*,1]*)];
 		localoperators=localoperators/.singlets//Expand;
 		Do[
 			If[
@@ -307,7 +307,7 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All Operators*)
 
 

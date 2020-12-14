@@ -60,6 +60,11 @@ TauSU3::usage = "..."
 DeltaBoxSU3::usage = "..."
 DeltaSU3::usage = "..."
 
+EpsilonFundBoxSU3::usage = "..."
+EpsilonAFundBoxSU3::usage = "..."
+EpsilonFundSU3::usage = "..."
+EpsilonAFundSU3::usage = "..."
+
 DeltaAdjBoxSU3::usage = "..."
 DeltaAdjSU3::usage = "..."
 
@@ -76,7 +81,7 @@ IndependentAdjSU3::usage = "..."
 
 TakeLabels::usage = "..."
 ToDelta::usage = "..."
-PairingsToDelta::usage = "..."
+PartitionsK::usage = "..."
 AdjConstraint::usage = "..."
 AllInvariantsSU3::usage = "..."
 AllInvariantDeltas::usage = "..."
@@ -97,7 +102,7 @@ Begin["`su2`"]
 (*Todo: add comments to the various functions.*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Labels and building blocks*)
 
 
@@ -226,7 +231,7 @@ DeltaSU2[A_,B_] /; \[Not]OrderedQ[{A,B}] := DeltaSU2[B,A];
 DeltaSU2[A_,B_] /; (A==B) := 3;
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Contractions and dummy labels*)
 
 
@@ -345,7 +350,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 (*Todo!!! For the SU(2) group it is enough a function which transforms a double epsilon into a combination of deltas. Otherwise the duplicates can be isolated using the Complement function for the two lists of three indices. For now this is implemented in ContractSU2*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Generation of independent invariant tensors*)
 
 
@@ -422,7 +427,7 @@ InvariantsSU2[pointslines_List,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Generation of the linear relations between invariant tensors*)
 
 
@@ -431,7 +436,7 @@ InvariantsSU2[pointslines_List,OptionsPattern[]]:=
 (*TODO: implement the contraction in the functions above.*)*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Generation of the su(2) linear relations*)
 
 
@@ -507,9 +512,6 @@ LinearRelationsSU2[pointslines_List,OptionsPattern[]]:=
 ]
 
 
-End[]
-
-
 (* ::Subsubsection:: *)
 (*All Invariants of su(2) appearing in the linear relations*)
 
@@ -545,6 +547,9 @@ SubstitutionsSU2[pointslines_List,OptionsPattern[]]:=
 	]
 
 
+End[]
+
+
 (* ::Section:: *)
 (*Invariant Tensors for the su(N) algebras*)
 
@@ -556,7 +561,7 @@ Begin["`suN`"]
 (*Labels and building blocks*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Indices of the fundamental representation*)
 
 
@@ -574,7 +579,7 @@ aLabel /: MakeBoxes[aLabel[x_],StandardForm|TraditionalForm] :=aBox[ToBoxes[x]]
 bLabel /: MakeBoxes[bLabel[x_],StandardForm|TraditionalForm] :=bBox[ToBoxes[x]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Indices of the adjoint representation*)
 
 
@@ -591,7 +596,7 @@ CBox[x_]:=
 CLabel /: MakeBoxes[CLabel[x_],StandardForm|TraditionalForm] := CBox[ToBoxes[x]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Generators*)
 
 
@@ -602,7 +607,7 @@ TauBoxSU3[A_,a_, b_] :=
 TauSU3 /: MakeBoxes[TauSU3[A_,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[ToBoxes[A],ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delta*)
 
 
@@ -613,7 +618,24 @@ DeltaBoxSU3[a_, b_] :=
 DeltaSU3 /: MakeBoxes[DeltaSU3[a_, b_], StandardForm | TraditionalForm] := DeltaBoxSU3[ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
+(*Epsilons (three fundamentals and three antifundamentals)*)
+
+
+EpsilonFundBoxSU3[a_,b_,c_]:=
+	TemplateBox[{a, b,c}, "EpsilonFundSU3",
+        DisplayFunction -> (SubscriptBox["\[Epsilon]",RowBox[{#1,#2,#3}]]&),
+        InterpretationFunction -> (RowBox[{"EpsilonFundSU3","[",RowBox[{#1 ",",#2,",",#3}],"]"}]&)]
+EpsilonFundSU3 /: MakeBoxes[EpsilonFundSU3[a_, b_,c_], StandardForm | TraditionalForm] := EpsilonFundBoxSU3[ToBoxes[a], ToBoxes[b],ToBoxes[c]]
+
+EpsilonAFundBoxSU3[a_,b_,c_]:=
+	TemplateBox[{a, b,c}, "EpsilonAFundSU3",
+        DisplayFunction -> (SuperscriptBox["\[Epsilon]",RowBox[{#1,#2,#3}]]&),
+        InterpretationFunction -> (RowBox[{"EpsilonAFundSU3","[",RowBox[{#1 ",",#2,",",#3}],"]"}]&)]
+EpsilonAFundSU3 /: MakeBoxes[EpsilonAFundSU3[a_, b_,c_], StandardForm | TraditionalForm] := EpsilonAFundBoxSU3[ToBoxes[a], ToBoxes[b],ToBoxes[c]]
+
+
+(* ::Subsubsection::Closed:: *)
 (*Delta (adjoint)*)
 
 
@@ -624,7 +646,7 @@ DeltaAdjBoxSU3[A_, B_] :=
 DeltaAdjSU3 /: MakeBoxes[DeltaAdjSU3[A_, B_], StandardForm | TraditionalForm] := DeltaAdjBoxSU3[ToBoxes[A], ToBoxes[B]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Structure constants*)
 
 
@@ -635,7 +657,7 @@ StructureBoxSU3[A_, B_,C_] :=
 StructureConstantSU3 /: MakeBoxes[StructureConstantSU3[A_, B_,C_], StandardForm | TraditionalForm] := StructureBoxSU3[ToBoxes[A], ToBoxes[B],ToBoxes[C]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*d-tensors*)
 
 
@@ -654,6 +676,9 @@ StructureConstantSU3[A_,B_,C_] /;  \[Not]OrderedQ[{A,B,C}] :=Signature[{A,B,C}]*
 
 TensorDSU3[A_,B_,C_] /;  \[Not]OrderedQ[{A,B,C}] :=TensorDSU3[Sequence@@Sort[{A,B,C}]];
 
+EpsilonFundSU3[a_,b_,c_] /; \[Not]OrderedQ[{a,b,c}] := Signature[{a,b,c}]*EpsilonFundSU3[Sequence@@Sort[{a,b,c}]]
+EpsilonAFundSU3[a_,b_,c_] /; \[Not]OrderedQ[{a,b,c}] := Signature[{a,b,c}]*EpsilonAFundSU3[Sequence@@Sort[{a,b,c}]]
+
 DeltaAdjSU3[A_,B_] /; \[Not]OrderedQ[{A,B}] := DeltaAdjSU3[B,A];
 
 StructureConstantSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
@@ -665,7 +690,7 @@ TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Rename dummies*)
 
 
@@ -684,7 +709,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices*)
 
 
@@ -699,6 +724,8 @@ ContractSU3[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 
 			TauSU3[A_,a_,b_] /; (a==b):>0,
 			DeltaSU3[a_,b_] /; (a==b) :> 3,
+			
+			EpsilonAFundSU3[d_,e_,f_]EpsilonFundSU3[a_,b_,c_] :> -(DeltaSU3[d, c]*DeltaSU3[e, b]*DeltaSU3[f, a]) + DeltaSU3[d, b]*DeltaSU3[e, c]*DeltaSU3[f, a] + DeltaSU3[d, c]*DeltaSU3[e, a]*DeltaSU3[f, b] - DeltaSU3[d, a]*DeltaSU3[e, c]*DeltaSU3[f, b] - DeltaSU3[d, b]*DeltaSU3[e, a]*DeltaSU3[f, c] + DeltaSU3[d, a]*DeltaSU3[e, b]*DeltaSU3[f, c],
 
 			DeltaAdjSU3[A_,B_] /; (A==B) :> 8,
 
@@ -802,13 +829,28 @@ AdjConstraint[x_Times]:=Times@@(AdjConstraint/@(List@@x))
 AdjConstraint[x_]:=If[MatchQ[x,DeltaSU3[aLabel[a_],bLabel[b_]]/;a==b],0,x]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Some functions*)
 
 
 TakeLabels[labelsreps_List]:=Table[labelsreps[[i,1]],{i,1,Length[labelsreps]}]
 ToDelta[{l1_,l2_}]:=DeltaSU3[aLabel[l1],bLabel[l2]]
-PairingsToDelta[listofpairings_List]:=ToDelta/@listofpairings
+ToDelta[{l1_,l2_,l3_}]:=EpsilonFundSU3[bLabel[l1],bLabel[l2],bLabel[l3]]
+ToDelta[{{l1_},{l2_},{l3_}}]:=EpsilonAFundSU3[aLabel[l1],aLabel[l2],aLabel[l3]]
+
+
+(* ::Subsubsection:: *)
+(*PartitionK*)
+
+
+PartitionsK[list_,l_]/;Length[list]==l:={{list}}
+
+PartitionsK[list_,l_]:= (*Iterative definition of the partitions of a set in subsets with l elements (Length[list]/l has to be an integer)*)
+	Join@@
+		Table[
+			{x,##}&@@@PartitionsK[Complement[list,x],l], (*# represent the first argument supplied to a pure function, ## represents a slot of arguments*)
+			{x,Subsets[list,{l},Binomial[Length[list]-1,l-1]]} (*Binomial[Length[list]-1,l-1] is the number of subsets with the first element of list. This avoids repetitions.*)
+		]
 
 
 (* ::Subsubsection:: *)
@@ -816,37 +858,99 @@ PairingsToDelta[listofpairings_List]:=ToDelta/@listofpairings
 
 
 AllInvariantsSU3[labelsrepresentations_List]:=
-	Module[{labelsfund,labelsantif,allinvariants},
+	Module[{labelsfund,labelsantif,allinvariants,numfund,numafund,mod3},
 		
 		labelsfund=
 			TakeLabels[
 				Select[labelsrepresentations,#[[2]]>=0&]
 			];
 		labelsantif=
-			Permutations[
-				TakeLabels[
+			TakeLabels[
 				Select[labelsrepresentations,#[[2]]<=0&]
-				]
 			];
+		
+		numfund=Length[labelsfund];
+		numafund=Length[labelsantif];
+		mod3=(numfund-numafund)/3;
+
+		If[\[Not]IntegerQ[mod3],Return["No invariants, man!"]];
 			
 		If[
-			(Length[labelsantif[[1]]]==Length[labelsfund]),
+			mod3==0,
+			labelsantif=Permutations[labelsantif];
 			allinvariants=
 				Transpose/@
-				Tuples[{{labelsfund},labelsantif}];
+					Tuples[{{labelsfund},labelsantif}];
+					(*Can this be made faster by using Join as below? TODO!*)
 			allinvariants=
-				If[MemberQ[#,x_/;(x[[1]]==x[[2]])],Nothing,#]&/@allinvariants,
-			Print["No invariants, man!"]
+				If[MemberQ[#,x_/;(x[[1]]==x[[2]])],Nothing,#]&/@allinvariants;
+				(*MemberQ is needed because it is enough for one of the deltas to be {i,i} for the invariant to be zero*)
+			Return[allinvariants]
+		];
+
+		If[
+			mod3>0,
+			
+			If[
+				numafund>0,
+				
+				labelsfund=
+					Join@@
+						Table[
+							{i,##}&@@@PartitionsK[Complement[labelsfund,i],3],
+							{i,Flatten[Permutations/@Subsets[labelsfund,{numafund}],1]}
+						];
+			
+				allinvariants=
+					MapAt[
+						Sequence@@
+							Transpose[
+								Join[{labelsantif},{#}]
+							]&,
+						labelsfund,
+						{All,1}
+					];
+				allinvariants=If[MemberQ[#,x_/;(x[[1]]==x[[2]])],Nothing,#]&/@allinvariants,
+				
+				allinvariants=PartitionsK[labelsfund,3];
+			];
+			
+			Return[allinvariants],
+			
+			If[
+				numfund>0,
+				
+				labelsantif=
+					Join@@
+						Table[
+							{i,##}&@@@Map[List,PartitionsK[Complement[labelsantif,i],3],{3}], (*similar to the definition of PartitionK, we take the excedeeing elements*)
+							{i,Flatten[Permutations/@Subsets[labelsantif,{numfund}],1]} (*permutations of the subsets with number of elements equal to the number of exceding elements between fund and antifund*)
+						];
+					
+				allinvariants=
+					MapAt[
+						Sequence@@
+							Transpose[
+								Join[{#},{labelsfund}]
+							]&,
+						labelsantif,
+						{All,1}
+					];
+				allinvariants=If[MemberQ[#,x_/;(x[[1]]==x[[2]])],Nothing,#]&/@allinvariants,
+				
+				allinvariants=Map[List,PartitionsK[labelsantif,3],{3}]
+			];
+			
+			Return[allinvariants]
 		]
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*All invariant (representation with deltas)*)
 
 
-AllInvariantDeltas[labelsrepresentations_List]:=
-Times@@@PairingsToDelta/@AllInvariantsSU3[labelsrepresentations]
+AllInvariantDeltas[labelsrepresentations_List]:=Times@@@Map[ToDelta,AllInvariantsSU3[labelsrepresentations],{2}]
 
 
 (* ::Subsection::Closed:: *)
@@ -886,7 +990,7 @@ SimplifyInvariants[list_List]:=
 (**)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Relations between the SU(3) invariants up to dimension 9 SMEFT operators (up to dimension 9 for the moment)*)
 
 
@@ -963,6 +1067,10 @@ SetAttributes[
 	TauSU3,
 	DeltaBoxSU3,
 	DeltaSU3,
+	EpsilonFundBoxSU3,
+	EpsilonAFundBoxSU3,
+	EpsilonFundSU3,
+	EpsilonAFundSU3,
 	DeltaAdjBoxSU3,
 	DeltaAdjSU3,
 	StructureBoxSU3,
@@ -975,7 +1083,7 @@ SetAttributes[
 	IndependentAdjSU3,
 	TakeLabels,
 	ToDelta,
-	PairingsToDelta,
+	PartitionsK,
 	AdjConstraint,
 	AllInvariantsSU3,
 	AllInvariantDeltas,
