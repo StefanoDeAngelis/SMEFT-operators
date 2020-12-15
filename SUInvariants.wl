@@ -102,7 +102,7 @@ Begin["`su2`"]
 (*Todo: add comments to the various functions.*)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Labels and building blocks*)
 
 
@@ -111,7 +111,7 @@ Begin["`su2`"]
 (*TODO:Check the coefficients of the substitutions*)*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Indices of fundamental representation*)
 
 
@@ -128,7 +128,7 @@ xBox[x_,n_]:=
 xLabel /: MakeBoxes[xLabel[x_,n_],StandardForm|TraditionalForm] := xBox[ToBoxes[x],ToBoxes[FromCharacterCode[n]]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Indices of the adjoint representation*)
 
 
@@ -145,7 +145,7 @@ XBox[x_]:=
 XLabel /: MakeBoxes[XLabel[x_],StandardForm|TraditionalForm] := XBox[ToBoxes[x]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Epsilon*)
 
 
@@ -156,7 +156,7 @@ EpsilonBoxSU2[a_, b_] :=
 EpsilonSU2 /: MakeBoxes[EpsilonSU2[a_, b_], StandardForm | TraditionalForm] := EpsilonBoxSU2[ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delta (fundamental)*)
 
 
@@ -167,7 +167,7 @@ EpsilonBoxSU2[a_][b_] :=
 EpsilonSU2 /: MakeBoxes[EpsilonSU2[a_][b_], StandardForm | TraditionalForm] := EpsilonBoxSU2[ToBoxes[a]][ToBoxes[b]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Generators*)
 
 
@@ -190,7 +190,7 @@ TauBoxSU2[A_,a_, b_] :=
 TauSU2 /: MakeBoxes[TauSU2[A_,a_, b_], StandardForm | TraditionalForm] := TauBoxSU2[ToBoxes[A],ToBoxes[a], ToBoxes[b]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Structure Constants*)
 
 
@@ -201,7 +201,7 @@ StructureBoxSU2[A_,B_, C_] :=
 StructureConstantSU2 /: MakeBoxes[StructureConstantSU2[A_,B_, C_], StandardForm | TraditionalForm] := StructureBoxSU2[ToBoxes[A],ToBoxes[B], ToBoxes[C]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delta (adjoint)*)
 
 
@@ -212,7 +212,7 @@ DeltaBoxSU2[A_,B_] :=
 DeltaSU2 /: MakeBoxes[DeltaSU2[A_,B_], StandardForm | TraditionalForm] := DeltaBoxSU2[ToBoxes[A],ToBoxes[B]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Symmetry properties of building blocks*)
 
 
@@ -231,11 +231,11 @@ DeltaSU2[A_,B_] /; \[Not]OrderedQ[{A,B}] := DeltaSU2[B,A];
 DeltaSU2[A_,B_] /; (A==B) := 3;
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Rename dummies*)
 
 
@@ -350,11 +350,11 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 (*Todo!!! For the SU(2) group it is enough a function which transforms a double epsilon into a combination of deltas. Otherwise the duplicates can be isolated using the Complement function for the two lists of three indices. For now this is implemented in ContractSU2*)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Generation of independent invariant tensors*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From the adjacency matrix to the associated epsilon structure*)
 
 
@@ -411,7 +411,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From the representation structure to the (independent&simplified) invariant tensors*)
 
 
@@ -427,7 +427,7 @@ InvariantsSU2[pointslines_List,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Generation of the linear relations between invariant tensors*)
 
 
@@ -512,7 +512,7 @@ LinearRelationsSU2[pointslines_List,OptionsPattern[]]:=
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All Invariants of su(2) appearing in the linear relations*)
 
 
@@ -709,7 +709,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices*)
 
 
@@ -820,7 +820,7 @@ IndependentAdjSU3[exp_]:=
 (*Generation of the independent invariant tensors*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Adjoint constraint (on delta representation of the invariats)*)
 
 
@@ -829,7 +829,7 @@ AdjConstraint[x_Times]:=Times@@(AdjConstraint/@(List@@x))
 AdjConstraint[x_]:=If[MatchQ[x,DeltaSU3[aLabel[a_],bLabel[b_]]/;a==b],0,x]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Some functions*)
 
 
@@ -839,7 +839,7 @@ ToDelta[{l1_,l2_,l3_}]:=EpsilonFundSU3[bLabel[l1],bLabel[l2],bLabel[l3]]
 ToDelta[{{l1_},{l2_},{l3_}}]:=EpsilonAFundSU3[aLabel[l1],aLabel[l2],aLabel[l3]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*PartitionK*)
 
 
@@ -853,7 +853,7 @@ PartitionsK[list_,l_]:= (*Iterative definition of the partitions of a set in sub
 		]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All invariants (list form)*)
 
 
@@ -873,7 +873,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 		numafund=Length[labelsantif];
 		mod3=(numfund-numafund)/3;
 
-		If[\[Not]IntegerQ[mod3],Return["No invariants, man!"]];
+		If[\[Not]IntegerQ[mod3],Return[0]];
 			
 		If[
 			mod3==0,
@@ -946,7 +946,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All invariant (representation with deltas)*)
 
 
@@ -986,11 +986,7 @@ SimplifyInvariants[list_List]:=
 	]
 
 
-(* ::Text:: *)
-(**)
-
-
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Relations between the SU(3) invariants up to dimension 9 SMEFT operators (up to dimension 9 for the moment)*)
 
 

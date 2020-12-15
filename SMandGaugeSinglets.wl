@@ -90,7 +90,7 @@ Scalars={HH,HBar}
 Fields={GluonsM,GluonsP,FermionsM,FermionsP,Scalars};
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Is a gauge singlet doable?*)
 
 
@@ -109,7 +109,7 @@ ColourSingletDoable[fields_List]:=
 		fundSU2=Count[tensorstructure[[2]],fund];
 		charge=Total[tensorstructure[[3]]];
 		If[
-			((fundSU3==0&&afundSU3==0&&adjointSU3!=1)||(Mod[fundSU3-afundSU3,3]==0))&&((fundSU2==0&&adjointSU2!=1)||(fundSU2!=0&&EvenQ[fundSU2]))&&
+			((fundSU3==0&&afundSU3==0&&adjointSU3!=1)||(Mod[fundSU3-afundSU3,3]==0&&(fundSU3!=0||afundSU3!=0)))&&((fundSU2==0&&adjointSU2!=1)||(fundSU2!=0&&EvenQ[fundSU2]))&&
 			charge==0, (*singlet conditions*)
 			Return[fields],
 			Return[Nothing];
@@ -117,7 +117,7 @@ ColourSingletDoable[fields_List]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Combinations of fields*)
 
 
@@ -192,7 +192,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Gauge Singlets*)
 
 
