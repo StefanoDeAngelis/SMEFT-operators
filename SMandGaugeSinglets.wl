@@ -215,7 +215,7 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 		adjointSU3=Flatten[Position[singlets[[1]],adj]];
 		singlets[[1]]=
 			SimplifyInvariants[
-				ContractSU3[#,Length[fields]+1]&/@
+				ContractSU3[#(*,Length[fields]+1*)]&/@
 					(Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,adjointSU3}]
 						AllInvariantDeltas[
 							SU3singlet[singlets[[1]]]

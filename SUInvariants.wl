@@ -68,16 +68,19 @@ EpsilonAFundSU3::usage = "..."
 DeltaAdjBoxSU3::usage = "..."
 DeltaAdjSU3::usage = "..."
 
+TraceBoxSU3::usage = "..."
+TraceSU3::usage = "..."
+
 StructureBoxSU3::usage = "..."
 StructureConstantSU3::usage = "..."
 
 TensorDBoxSU3::usage = "..."
 TensorDSU3::usage = "..."
 
-RenameDummiesSU3::usage = "..."
+(*RenameDummiesSU3::usage = "..."*)
 ContractSU3::usage = "..."
-JacobiSU3::usage = "..."
-IndependentAdjSU3::usage = "..."
+(*JacobiSU3::usage = "..."
+IndependentAdjSU3::usage = "..."*)
 
 TakeLabels::usage = "..."
 ToDelta::usage = "..."
@@ -88,7 +91,7 @@ AllInvariantDeltas::usage = "..."
 
 SimplifyInvariants::usage = "..."
 
-AllIdentitiesSU3::usage = "..."
+(*AllIdentitiesSU3::usage = "..."*)
 
 
 (* ::Section:: *)
@@ -342,7 +345,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Independent adjoint structures*)
 
 
@@ -596,15 +599,15 @@ CBox[x_]:=
 CLabel /: MakeBoxes[CLabel[x_],StandardForm|TraditionalForm] := CBox[ToBoxes[x]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Generators*)
 
 
-TauBoxSU3[A_,a_, b_] :=
+TauBoxSU3[A__,a_, b_] :=
     TemplateBox[{A,a, b}, "TauSU3",
-        DisplayFunction -> (SubscriptBox[SuperscriptBox["\[Tau]",RowBox[{#1,#2}]],RowBox[{#3}]]&),
-        InterpretationFunction -> (RowBox[{"TauSU3","[",RowBox[{#1 ",",#2,",",#3}],"]"}]&)]
-TauSU3 /: MakeBoxes[TauSU3[A_,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[ToBoxes[A],ToBoxes[a], ToBoxes[b]]
+        DisplayFunction -> (SubscriptBox[SuperscriptBox["\[Tau]",RowBox[{A,a}]],RowBox[{b}]]&),
+        InterpretationFunction -> (RowBox[{"TauSU3","[",RowBox[{A ",",a,",",b}],"]"}]&)]
+TauSU3 /: MakeBoxes[TauSU3[A__,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[Sequence@@(ToBoxes/@{A}),ToBoxes[a], ToBoxes[b]]
 
 
 (* ::Subsubsection::Closed:: *)
@@ -647,6 +650,17 @@ DeltaAdjSU3 /: MakeBoxes[DeltaAdjSU3[A_, B_], StandardForm | TraditionalForm] :=
 
 
 (* ::Subsubsection::Closed:: *)
+(*Trace structures*)
+
+
+TraceBoxSU3[A__] :=
+    TemplateBox[{A}, "TraceSU3",
+        DisplayFunction -> (SuperscriptBox["\[Tau]",RowBox[{##}]]&),
+        InterpretationFunction -> (RowBox[{"TraceSU3","[",RowBox[{##}],"]"}]&)]
+TraceSU3 /: MakeBoxes[TraceSU3[A__], StandardForm | TraditionalForm] := TraceBoxSU3[Sequence@@(ToBoxes/@{A})]
+
+
+(* ::Subsubsection::Closed:: *)
 (*Structure constants*)
 
 
@@ -668,18 +682,20 @@ TensorDBoxSU3[A_, B_,C_] :=
 TensorDSU3/: MakeBoxes[TensorDSU3[A_, B_,C_], StandardForm | TraditionalForm] := TensorDBoxSU3[ToBoxes[A], ToBoxes[B],ToBoxes[C]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Symmetry properties of the building blocks*)
 
 
 StructureConstantSU3[A_,B_,C_] /;  \[Not]OrderedQ[{A,B,C}] :=Signature[{A,B,C}]*StructureConstantSU3[Sequence@@Sort[{A,B,C}]];
 
-TensorDSU3[A_,B_,C_] /;  \[Not]OrderedQ[{A,B,C}] :=TensorDSU3[Sequence@@Sort[{A,B,C}]];
+TensorDSU3[A_,B_,C_] /; \[Not]OrderedQ[{A,B,C}] :=TensorDSU3[Sequence@@Sort[{A,B,C}]];
 
 EpsilonFundSU3[a_,b_,c_] /; \[Not]OrderedQ[{a,b,c}] := Signature[{a,b,c}]*EpsilonFundSU3[Sequence@@Sort[{a,b,c}]]
 EpsilonAFundSU3[a_,b_,c_] /; \[Not]OrderedQ[{a,b,c}] := Signature[{a,b,c}]*EpsilonAFundSU3[Sequence@@Sort[{a,b,c}]]
 
 DeltaAdjSU3[A_,B_] /; \[Not]OrderedQ[{A,B}] := DeltaAdjSU3[B,A];
+
+TraceSU3[A__]/;(First@Ordering[{A}]!=1):=TraceSU3[Sequence@@RotateLeft[{A},First@Ordering[{A}]-1]];
 
 StructureConstantSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 
@@ -690,11 +706,11 @@ TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Rename dummies*)
 
 
-RenameDummiesSU3[x_Plus,n_]:=Plus@@(RenameDummiesSU3[#,n]&/@(List@@x))
+(*RenameDummiesSU3[x_Plus,n_]:=Plus@@(RenameDummiesSU3[#,n]&/@(List@@x))
 
 RenameDummiesSU3[exp_,n_]:=
 	Module[{localexp,dummies={}},
@@ -706,16 +722,16 @@ RenameDummiesSU3[exp_,n_]:=
 		dummies=DeleteDuplicates[dummies];
 		localexp=ReLabel[exp,dummies,Table[n+i-1,{i,1,Length[dummies]}]];
 		Return[localexp];
-	]
+	]*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices*)
 
 
-ContractSU3[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
+ContractSU3[exp_(*,dummylabel_*)]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
-		{localexp=exp,eliminatedeltas,decompositiongenerators,(*normandsymm,*)dummies=dummylabel},
+		{localexp=exp,eliminatedeltas,decompositiongenerators(*,normandsymm*)(*,dummies=dummylabel*),compositiongenerators},
 		eliminatedeltas=
 			{
 			TauSU3[A_,a_,b_]DeltaSU3[c_,d_]/;(b==c):>TauSU3[A,a,d],
@@ -739,9 +755,9 @@ ContractSU3[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			};
 		decompositiongenerators=
 			{
-			TauSU3[A_,a_,b_]TauSU3[B_,c_,d_] /;(b==c)&&(a==d) :> 1/2 * DeltaAdjSU3[A,B],
+			TauSU3[A_,a_,b_]TauSU3[B_,c_,d_] /;(b==c)&&(a==d) :> 1/2 * DeltaAdjSU3[A,B](*,
 
-			TauSU3[A_,a_,b_]TauSU3[B_,c_,d_]/; (b==c) :> I/2* StructureConstantSU3[A,B,CLabel[dummies]] TauSU3[CLabel[dummies],a,d]+1/2* TensorDSU3[A,B,CLabel[dummies]] TauSU3[CLabel[dummies++],a,d] + 1/6*DeltaAdjSU3[A,B] *DeltaSU3[a,d]
+			TauSU3[A_,a_,b_]TauSU3[B_,c_,d_]/; (b==c) :> I/2* StructureConstantSU3[A,B,CLabel[dummies]] TauSU3[CLabel[dummies],a,d]+1/2* TensorDSU3[A,B,CLabel[dummies]] TauSU3[CLabel[dummies++],a,d] + 1/6*DeltaAdjSU3[A,B] *DeltaSU3[a,d]*)
 			};
 		(*normandsymm=
 			{
@@ -756,7 +772,15 @@ ContractSU3[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 				Expand[ReplaceRepeated[#,Join[eliminatedeltas,decompositiongenerators(*,normandsymm*)]]]&,
 				localexp
 			];
-		localexp=RenameDummiesSU3[localexp,dummylabel];
+		
+		compositiongenerators=
+			{
+			TauSU3[A__,a_,b_]TauSU3[B__,c_,d_]/;b==c:>TauSU3[A,B,a,d],
+			
+			TauSU3[A__,a_,b_]/;a==b&&Length[{A}]>1:>TraceSU3[A]
+			};
+		localexp=ReplaceRepeated[localexp,compositiongenerators];
+		(*localexp=RenameDummiesSU3[localexp,dummylabel];*)
 		Return[localexp];
 	]
 
@@ -769,7 +793,7 @@ ContractSU3[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 (*Jacobi identities*)
 
 
-JacobiSU3[exp_]:=
+(*JacobiSU3[exp_]:=
 	Module[{localexp=exp,jacobi},
 
 		jacobi=
@@ -785,7 +809,7 @@ JacobiSU3[exp_]:=
 
 		Return[localexp];
 
-	]
+	]*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -795,7 +819,7 @@ JacobiSU3[exp_]:=
 (*TODO: avoid the repeated replacement but give a general one with a DuplicateFreeQ conditions and Signature for the sign from the different ordering*)
 
 
-IndependentAdjSU3[exp_]:=
+(*IndependentAdjSU3[exp_]:=
 	Module[{localexp=exp,replacements},
 
 		replacements=
@@ -813,7 +837,7 @@ IndependentAdjSU3[exp_]:=
 
 		Return[localexp];
 
-	]
+	]*)
 
 
 (* ::Subsection:: *)
@@ -990,12 +1014,12 @@ SimplifyInvariants[list_List]:=
 (*Relations between the SU(3) invariants up to dimension 9 SMEFT operators (up to dimension 9 for the moment)*)
 
 
-AllIdentitiesSU3[labelsrepresentations_List]:=
+(*AllIdentitiesSU3[labelsrepresentations_List]:=
 	Module[{labelsfund,labelsantif,labelsadj,dummies,nA,nF,delta,identities},
 		labelsfund=TakeLabels[Select[labelsrepresentations,#[[2]]==1&]];
 		labelsantif=TakeLabels[Select[labelsrepresentations,#[[2]]==-1&]];
 		labelsadj=TakeLabels[Select[labelsrepresentations,#[[2]]==0&]];
-		dummies=Max[Join[labelsfund,labelsantif,labelsadj]]+1;
+		(*dummies=Max[Join[labelsfund,labelsantif,labelsadj]]+1;*)
 		nA=Length[labelsadj];
 		nF=Length[labelsfund];
 		labelsfund=Join[labelsfund,labelsadj];
@@ -1005,11 +1029,11 @@ AllIdentitiesSU3[labelsrepresentations_List]:=
 		If[nA+nF==4, 
 			identities=4!*AdjConstraint[Symmetrise[delta,bLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
 			identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
-			identities=ContractSU3[IndependentAdjSU3[ContractSU3[identities,dummies]],dummies];
+			identities=ContractSU3[IndependentAdjSU3[ContractSU3[identities(*,dummies*)]](*,dummies*)];
 			Return[identities];
 		];
 		If[nA + nF > 5, Print["Wait! Not so fast, man!"]];
-	]
+	]*)
 
 
 (* ::Text:: *)
@@ -1069,22 +1093,24 @@ SetAttributes[
 	EpsilonAFundSU3,
 	DeltaAdjBoxSU3,
 	DeltaAdjSU3,
+	TraceBoxSU3,
+	TraceSU3,
 	StructureBoxSU3,
 	StructureConstantSU3,
 	TensorDBoxSU3,
-	TensorDSU3,
-	RenameDummiesSU3,
-	ContractSU3,
+	TensorDSU3(*,
+	RenameDummiesSU3*),
+	ContractSU3(*,
 	JacobiSU3,
-	IndependentAdjSU3,
+	IndependentAdjSU3*),
 	TakeLabels,
 	ToDelta,
 	PartitionsK,
 	AdjConstraint,
 	AllInvariantsSU3,
 	AllInvariantDeltas,
-	SimplifyInvariants,
-	AllIdentitiesSU3
+	SimplifyInvariants(*,
+	AllIdentitiesSU3*)
 	},
     Protected
 ]
