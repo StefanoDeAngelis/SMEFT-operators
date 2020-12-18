@@ -91,7 +91,7 @@ AllInvariantDeltas::usage = "..."
 
 SimplifyInvariants::usage = "..."
 
-(*AllIdentitiesSU3::usage = "..."*)
+AllIdentitiesSU3::usage = "..."
 
 
 (* ::Section:: *)
@@ -599,7 +599,7 @@ CBox[x_]:=
 CLabel /: MakeBoxes[CLabel[x_],StandardForm|TraditionalForm] := CBox[ToBoxes[x]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Generators*)
 
 
@@ -696,6 +696,7 @@ EpsilonAFundSU3[a_,b_,c_] /; \[Not]OrderedQ[{a,b,c}] := Signature[{a,b,c}]*Epsil
 DeltaAdjSU3[A_,B_] /; \[Not]OrderedQ[{A,B}] := DeltaAdjSU3[B,A];
 
 TraceSU3[A__]/;(First@Ordering[{A}]!=1):=TraceSU3[Sequence@@RotateLeft[{A},First@Ordering[{A}]-1]];
+TraceSU3[A__]/;Length[{A}]==2:=DeltaAdjSU3[A]/2;
 
 StructureConstantSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 
@@ -706,7 +707,7 @@ TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Rename dummies*)
 
 
@@ -725,7 +726,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices*)
 
 
@@ -1014,7 +1015,7 @@ SimplifyInvariants[list_List]:=
 (*Relations between the SU(3) invariants up to dimension 9 SMEFT operators (up to dimension 9 for the moment)*)
 
 
-(*AllIdentitiesSU3[labelsrepresentations_List]:=
+AllIdentitiesSU3[labelsrepresentations_List]:=
 	Module[{labelsfund,labelsantif,labelsadj,dummies,nA,nF,delta,identities},
 		labelsfund=TakeLabels[Select[labelsrepresentations,#[[2]]==1&]];
 		labelsantif=TakeLabels[Select[labelsrepresentations,#[[2]]==-1&]];
@@ -1029,11 +1030,11 @@ SimplifyInvariants[list_List]:=
 		If[nA+nF==4, 
 			identities=4!*AdjConstraint[Symmetrise[delta,bLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
 			identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
-			identities=ContractSU3[IndependentAdjSU3[ContractSU3[identities(*,dummies*)]](*,dummies*)];
+			identities=ContractSU3[(*IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies*)];
 			Return[identities];
 		];
 		If[nA + nF > 5, Print["Wait! Not so fast, man!"]];
-	]*)
+	]
 
 
 (* ::Text:: *)
@@ -1109,8 +1110,8 @@ SetAttributes[
 	AdjConstraint,
 	AllInvariantsSU3,
 	AllInvariantDeltas,
-	SimplifyInvariants(*,
-	AllIdentitiesSU3*)
+	SimplifyInvariants,
+	AllIdentitiesSU3
 	},
     Protected
 ]
