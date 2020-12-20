@@ -1011,29 +1011,58 @@ SimplifyInvariants[list_List]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Relations between the SU(3) invariants up to dimension 9 SMEFT operators (up to dimension 9 for the moment)*)
 
 
 AllIdentitiesSU3[labelsrepresentations_List]:=
-	Module[{labelsfund,labelsantif,labelsadj,dummies,nA,nF,delta,identities},
+	Module[{labelsfund,labelsantif,labelsadj,dummies,nA,nAF,nF,invariants,x,delta,identities},
 		labelsfund=TakeLabels[Select[labelsrepresentations,#[[2]]==1&]];
 		labelsantif=TakeLabels[Select[labelsrepresentations,#[[2]]==-1&]];
 		labelsadj=TakeLabels[Select[labelsrepresentations,#[[2]]==0&]];
-		(*dummies=Max[Join[labelsfund,labelsantif,labelsadj]]+1;*)
+(*dummies=Max[Join[labelsfund,labelsantif,labelsadj]]+1;*)
+		
 		nA=Length[labelsadj];
 		nF=Length[labelsfund];
+		nAF=Length[labelsantif];
+		
 		labelsfund=Join[labelsfund,labelsadj];
+		
 		labelsantif=Join[labelsantif,labelsadj];
-		delta=Times@@ToDelta/@Transpose[{labelsfund, labelsantif}];
-		If[nA+nF<4,Return[{}]];
-		If[nA+nF==4, 
-			identities=4!*AdjConstraint[Symmetrise[delta,bLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
-			identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
-			identities=ContractSU3[(*IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies*)];
-			Return[identities];
+		
+		If[(nA+nF<4)&&(nAF+nA<4),Return[{}]];
+		
+		If[nA+nF==4||nAF+nA==4,
+			If[nF==nAF,
+				delta=Times@@ToDelta/@Transpose[{labelsfund,labelsantif}];
+				identities=4!*AdjConstraint[Symmetrise[delta,bLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
+				identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
+				identities=(*ContractSU3[IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies]*)
+			];
+			If[nF<nAF,
+				delta={List/@Take[labelsantif,nAF-nF],Take[labelsantif,-nF-nA]};
+				delta=MapAt[Sequence@@Partition[#,3]&,delta,1];
+				delta=Times@@ToDelta/@MapAt[Sequence@@Transpose[{#,labelsfund}]&,delta,2];
+				identities=4*AdjConstraint[Symmetrise[delta,aLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
+				identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
+				identities=(*ContractSU3[IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies]*)
+			];
+			If[nAF<nF,
+				delta={Take[labelsfund,nF-nAF],Take[labelsfund,-nA-nAF]};
+				delta=MapAt[Sequence@@Partition[#,3]&,delta,1];
+				delta=Times@@ToDelta/@MapAt[Sequence@@Transpose[{labelsantif,#}]&,delta,2];
+				identities=4*AdjConstraint[Symmetrise[delta,bLabel/@labelsfund,"AntiSymmetric"->True]]//Expand;
+				identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
+				identities=(*ContractSU3[IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies]*)
+			];
+			
+			invariants=If[NumberQ[#[[1]]]&&Head[#]==Times,Delete[#,1],#]&/@ContractSU3[Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]AllInvariantDeltas[labelsrepresentations]];
+			invariants=Thread[Table[Rule[invariants[[i]],x[i]],{i,1,Length[invariants]}]];
+	
+			invariants=Flatten[Solve[(identities/.invariants)==0]/.(Reverse/@invariants)];
+			Return[invariants]
 		];
-		If[nA + nF > 5, Print["Wait! Not so fast, man!"]];
+		If[nA+nF>5||nAF+nF>5,Return[{}]];
 	]
 
 

@@ -64,14 +64,14 @@ AllOperators::usage = "..."
 Begin["`Private`"]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Transformation rules*)
 
 
 TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm->{adj,sing,0},WWm->{sing,adj,0},BBm->{sing,sing,0},QQ->{fund,fund,1/6},uu->{afund,sing,-(2/3)},dd->{afund,sing,1/3},LL->{sing,fund,-(1/2)},ee->{sing,sing,1},QBar->{afund,fund,-(1/6)},uBar->{fund,sing,2/3},dBar->{fund,sing,-(1/3)},LBar->{sing,fund,1/2},eBar->{sing,sing,-1},HH->{sing,fund,1/2},HBar->{sing,fund,-(1/2)}}
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Fields order*)
 
 
@@ -90,7 +90,7 @@ Scalars={HH,HBar}
 Fields={GluonsM,GluonsP,FermionsM,FermionsP,Scalars};
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Is a gauge singlet doable?*)
 
 
@@ -117,7 +117,7 @@ ColourSingletDoable[fields_List]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Combinations of fields*)
 
 
@@ -192,7 +192,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Gauge Singlets*)
 
 
@@ -278,7 +278,7 @@ FinalAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
 
 IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 	Module[{singlets,num=Length[fields],localoperators,count,independent={operators[[1]]}},
-		If[Length[operators]==1||DuplicateFreeQ[fields],Return[{{fields},operators}]];
+		If[Length[operators]==1,Return[{{fields},operators}]];
 		localoperators=Expand[operators/.{SpinorAngleBracket[i_,l_]SpinorSquareBracket[j_,k_]/;(l==k==num):>-Sum[SpinorAngleBracket[i,p]SpinorSquareBracket[j,p],{p,1,num-1}]}];(*powers???*)
 		count=AngleSquareCount[#,num]&/@localoperators;
 		count=AngleSquareSchouten[DeleteDuplicates[count]];
@@ -290,9 +290,13 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 				],
 				-1
 			];
-		singlets={(*AllIdentitiesSU3[SU3singlet[singlets[[1]]]],*)SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]};
-		singlets=Flatten[(*Drop[*)singlets(*,1]*)];
-		localoperators=localoperators/.singlets//Expand;
+		singlets={AllIdentitiesSU3[SU3singlet[singlets[[1]]]],SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]};
+		singlets=Flatten[singlets];
+		localoperators=
+			FixedPoint[
+				Expand[ReplaceRepeated[#,singlets]]&,
+				localoperators
+			];
 		Do[
 			If[
 				\[Not]MatchQ[
