@@ -19,7 +19,6 @@ HelicityStructure::usage = "..."
 PartitionMomenta::usage = "..."
 MomentaSelection::usage = "..."
 SpinorStructure::usage = "..."
-CountsToList::usage = "..."
 IsSingletDoable::usage = "..."
 
 BracketBox::usage = "..."
@@ -215,17 +214,6 @@ SpinorStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*appends the
 
 
 (* ::Subsubsection::Closed:: *)
-(*Counts to list*)
-
-
-CountsToList[list_List]:= (*counts the number of times each distinct element appears and transform the association to a list of lists made of two objects, the label of each element and the counting*)
-	KeyValueMap[
-		List,
-		Counts[list]
-	]
-
-
-(* ::Subsubsection::Closed:: *)
 (*Is a singlet doable?*)
 
 
@@ -250,7 +238,7 @@ IsSingletDoable[{List1_,List2_}]:= (*the counting of one element can never excee
 		If[
 			test1&&test2,
 			Return[
-				{CountsToList[List1],CountsToList[List2]}
+				{Tally[List1],Tally[List2]}
 			],
 			Return[Nothing];
 		];
@@ -511,7 +499,7 @@ AngleSquareSchouten[count_List,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Is Momentum Conservation implemented correctly?*)
 
 
@@ -601,7 +589,6 @@ SetAttributes[
 	AllMomentaPartition,
 	MomentaSelection,
 	SpinorStructure,
-	CountsToList,
 	IsSingletDoable,
 	BracketBox,
 	Bracket,

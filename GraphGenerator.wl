@@ -30,7 +30,7 @@ DrawAdjacencyGraph::usage = "..."
 Begin["`Private`"]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Permutations of Partitions*)
 
 
@@ -41,7 +41,7 @@ PermutationsOfPartitions[counting_,length_]:= (*this function generates the perm
 				Permutations,
 					Map[
 						PadRight[#,length]&, (*PadRight inserts additional zero (if needed) such that the results permutation of a given partition gives length_ elem*)
-						IntegerPartitions[counting]
+						IntegerPartitions[counting,length] (*The second argument is necessary in the case we more edges than vertices*)
 					]
 				],
 				1
