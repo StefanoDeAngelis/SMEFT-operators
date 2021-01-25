@@ -52,6 +52,7 @@ SU2singlet::usage = "..."
 GaugeSinglets::usage = "..."
 
 FinalAmplitude::usage = "..."
+MomentumConservationReplacements::usage = "..."
 IdentitiesBetweenAmplitudes::usage = "..."
 
 AllOperators::usage = "..."
@@ -235,7 +236,7 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Final Amplitude*)
 
 
@@ -267,7 +268,24 @@ FinalAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsection::Closed:: *)
+(*Momentum conservation replacements*)
+
+
+MomentumConservationReplacements[length_Integer]:=
+	Join[
+		Flatten@Table[SpinorAngleBracket[i,length]^a_. SpinorSquareBracket[j,length]^b_.:>Evaluate[(Sum[-SpinorAngleBracket[i,k]SpinorSquareBracket[j,k],{k,1,length-1}])^Min[a,b] SpinorAngleBracket[i,length]^Max[a-b,0] SpinorSquareBracket[j,length]^Max[b-a,0]],{i,1,length-1},{j,1,length-1}],
+		Table[SpinorAngleBracket[i,length-1]^a_. SpinorSquareBracket[length-1,length]^b_.:>Evaluate[Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[j,length],{j,1,length-2}]^Min[a,b]*SpinorAngleBracket[i,length-1]^Max[a-b,0] SpinorSquareBracket[length-1,length]^Max[b-a,0]],{i,1,length-2}],
+		Table[SpinorSquareBracket[i,length-1]^a_. SpinorAngleBracket[length-1,length]^b_.:>Evaluate[Sum[-SpinorSquareBracket[i,j]SpinorAngleBracket[j,length],{j,1,length-2}]^Min[a,b]*SpinorSquareBracket[i,length-1]^Max[a-b,0] SpinorAngleBracket[length-1,length]^Max[b-a,0]],{i,1,length-2}],
+		List[
+			SpinorAngleBracket[1,length-1]^a_.*SpinorSquareBracket[1,length]^b_.:>Evaluate[Sum[-SpinorAngleBracket[j,length-1]*SpinorSquareBracket[j,length],{j,2,length-2}]^Min[a,b] SpinorAngleBracket[1,length-1]^Max[a-b,0]*SpinorSquareBracket[1,length]^Max[b-a,0]],
+			SpinorSquareBracket[1,length-1]^a_.*SpinorAngleBracket[1,length]^b_.:>Evaluate[Sum[-SpinorSquareBracket[j,length-1]*SpinorAngleBracket[j,length],{j,2,length-2}]^Min[a,b] SpinorSquareBracket[1,length-1]^Max[a-b,0]*SpinorAngleBracket[1,length]^Max[b-a,0]],
+			SpinorAngleBracket[1,length-1]^a_. SpinorSquareBracket[1,length-1]^b_.:>Evaluate[(Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[i,j],{i,2,length-1},{j,i+1,length-1}]-Sum[SpinorAngleBracket[1,j]SpinorSquareBracket[1,j],{j,2,length-2}])^Min[a,b] SpinorAngleBracket[1,length-1]^Max[a-b,0] SpinorSquareBracket[1,length-1]^Max[b-a,0]]
+		]
+	]
+
+
+(* ::Subsection::Closed:: *)
 (*Identities Between Amplitudes*)
 
 
@@ -277,12 +295,21 @@ FinalAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
 
 
 IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
-	Module[{singlets,num=Length[fields],localoperators,count,independent={operators[[1]]}},
-		If[Length[operators]==1,Return[{{fields},operators}]];
-		localoperators=Expand[operators/.{SpinorAngleBracket[i_,l_]SpinorSquareBracket[j_,k_]/;(l==k==num):>-Sum[SpinorAngleBracket[i,p]SpinorSquareBracket[j,p],{p,1,num-1}]}];(*powers???*)
+	Module[{singlets,num=Length[fields],localoperators,count,ids,independent={operators[[1]]}},
+		ids=MomentumConservationReplacements[num];
+		localoperators=
+			FixedPoint[
+				Expand[ReplaceRepeated[#,ids]]&,
+				operators
+			];
 		count=AngleSquareCount[#,num]&/@localoperators;
 		count=AngleSquareSchouten[DeleteDuplicates[count]];
-		localoperators=localoperators/.count//Expand;
+		ids=Join[ids,count];
+		localoperators=
+			FixedPoint[
+				Expand[ReplaceRepeated[#,ids]]&,
+				operators
+			];
 		singlets=
 			Drop[
 				Transpose[
@@ -297,6 +324,8 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 				Expand[ReplaceRepeated[#,singlets]]&,
 				localoperators
 			];
+		localoperators=DeleteCases[localoperators,0];
+		If[localoperators==={},Return[Nothing]];
 		Do[
 			If[
 				\[Not]MatchQ[
@@ -311,13 +340,13 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
 (*All Operators*)
 
 
 AllOperators[d_]:=
 	Module[{matter,helicityfactor,ops},
-		{matter,helicityfactor}=Transpose[(*IndependentHelicityFactors[d]*)TestMomentumConservation[d]];
+		{matter,helicityfactor}=Transpose[(*IndependentHelicityFactors[d]*)(*TestMomentumConservation[d]*)IndependentStructures[d]];
 		matter=CombinationsOfFields/@matter;
 		ops=
 			Flatten[
@@ -381,6 +410,7 @@ SetAttributes[
 	SU2singlet,
 	GaugeSinglets,
 	FinalAmplitude,
+	MomentumConservationReplacements,
 	IdentitiesBetweenAmplitudes,
 	AllOperators
 	},

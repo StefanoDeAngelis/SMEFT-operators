@@ -35,9 +35,13 @@ SquareCount::usage = "..."
 AngleSquareCount::usage = "..."
 AngleSquareSchouten::usage = "..."
 
-MomentumConservationIdentities::usage = "..."
+MomentumConservationIdentitiesOld::usage = "..."
 IdentitiesBetweenKinematics::usage = "..."
 TestMomentumConservation::usage = "..."
+
+MomentumConservationRedundancies::usage = "..."
+MomentumConservation::usage = "..."
+IndependentStructures::usage = "..."
 
 
 (* ::Section:: *)
@@ -92,7 +96,7 @@ AmplitudesStructure[d_]:= (*This function assign all the compatible derivative n
 		Map[
 			Table[
 				If[
-					(EvenQ[der+#[[2,1]]])&& (*The first four conditions come from the representation theory and they check wheter is possible to form a Lorentz singlet*)
+					(EvenQ[der+#[[2,1]]])&& (*The first four conditions come from the representation theory and they check whether is possible to form a Lorentz singlet*)
 						(EvenQ[der+#[[2,2]]])&&
 						(#[[1,1]]!=1||((#[[2,1]]+der )>=1))&&
 						(#[[1,2]]!=1||((#[[2,2]]+der )>=1))&&
@@ -500,10 +504,10 @@ AngleSquareSchouten[count_List,OptionsPattern[]]:=
 
 
 (* ::Subsubsection::Closed:: *)
-(*Is Momentum Conservation implemented correctly?*)
+(*Old Momentum Conservation*)
 
 
-MomentumConservationIdentities[length_Integer,sign_]:=
+MomentumConservationIdentitiesOld[length_Integer,sign_]:=
 	If[
 		sign>0,
 		Table[Sum[SpinorAngleBracket[i,k]SpinorSquareBracket[k,length],{k,1,length-1}]==0,{i,1,length-1}],
@@ -513,29 +517,6 @@ MomentumConservationIdentities[length_Integer,sign_]:=
 			{}
 		]
 	]
-
-(*IdentitiesBetweenKinematics[{{fields_},operators_}]:=
-	Module[{num=Total[fields],lasthelicity,helicities={-2,2,-1,1,0},weights={2,2,3/2,3/2,1},schouten,momcons={},dependent={},ders},
-		ders=MassDimension[operators[[1]]]+num-Sum[fields[[i]]*weights[[i]],{i,1,5}];
-		If[Length[operators]\[Equal]1||ders\[Equal]0,Return[{{fields},dependent}]];
-		Do[If[fields[[5-j]]\[NotEqual]0,lasthelicity=5-j;Break[]],{j,0,4}];
-		lasthelicity=helicities[[lasthelicity]];
-		schouten=AngleSquareCount[#,num]&/@operators;
-		schouten=AngleSquareSchouten[DeleteDuplicates[schouten],"Substitutions"\[Rule]False];
-		momcons=MomentumConservationIdentities[num,lasthelicity];
-		If[ders>2,momcons=Join[momcons,{Sum[\[LeftAngleBracket]j\[MediumSpace]i\[RightAngleBracket][i\[MediumSpace]j],{i,1,num-1},{j,i+1,num-1}]\[Equal]0}]];
-		Do[
-			If[
-				MatchQ[
-					Simplify[operators[[i]],Join[Table[operators[[j]]\[Equal]0,{j,1,i-1}],schouten,momcons]],
-					0
-				],
-				AppendTo[dependent,operators[[i]]];
-			],
-			{i,1,Length[operators]}
-		];
-		Return[{{fields},dependent}];
-	]*)
 	
 IdentitiesBetweenKinematics[{{fields_},operators_}]:=
 	Module[{num=Total[fields],lasthelicity,helicities={-2,2,-1,1,0},weights={2,2,3/2,3/2,1},schouten,momcons={},independent={operators[[1]]},ders},
@@ -545,7 +526,7 @@ IdentitiesBetweenKinematics[{{fields_},operators_}]:=
 		lasthelicity=helicities[[lasthelicity]];
 		schouten=AngleSquareCount[#,num]&/@operators;
 		schouten=AngleSquareSchouten[DeleteDuplicates[schouten],"Substitutions"->False];
-		momcons=MomentumConservationIdentities[num,lasthelicity];
+		momcons=MomentumConservationIdentitiesOld[num,lasthelicity];
 		If[ders>=2,momcons=Join[momcons,{Sum[SpinorAngleBracket[j,i]SpinorSquareBracket[i,j],{i,1,num-1},{j,i+1,num-1}]==0}]];
 		Do[
 			If[
@@ -568,6 +549,35 @@ TestMomentumConservation[d_]:=
 		ff=Flatten[Tuples/@ff,1];
 		Return[ff]
 	]
+
+
+(* ::Subsubsection::Closed:: *)
+(*Is Momentum Conservation implemented correctly?*)
+
+
+MomentumConservationRedundancies[length_Integer,sign_]:=
+	Append[
+		If[
+			sign>0,
+			Append[Table[SpinorAngleBracket[i,length-1]^a_. SpinorSquareBracket[length-1,length]^b_.:>0,{i,1,length-2}],SpinorAngleBracket[1,length-1]^a_.*SpinorSquareBracket[1,length]^b_.:>0],
+			If[
+				sign<0,
+				Append[Table[SpinorAngleBracket[length-1,length]^a_. SpinorSquareBracket[i,length-1]^b_.:>0,{i,1,length-2}],SpinorAngleBracket[1,length]^a_. SpinorSquareBracket[1,length-1]^b_.:>0],
+				{}
+			]
+		],
+		SpinorAngleBracket[1,length-1]^a_. SpinorSquareBracket[1,length-1]^b_.:>0
+	]
+
+
+MomentumConservation[{fields_List,operator_}]:=
+	Module[{num=Total[fields],lasthelicity,helicities={-2,2,-1,1,0}},
+		Do[If[fields[[5-j]]!=0,lasthelicity=5-j;Break[]],{j,0,4}];
+		If[ReplaceAll[operator,MomentumConservationRedundancies[num,helicities[[lasthelicity]]]]===0,Return[Nothing],Return[{fields,operator}]]
+	]
+
+
+IndependentStructures[d_]:=MomentumConservation/@IndependentHelicityFactors[d]
 
 
 End[]
@@ -602,9 +612,12 @@ SetAttributes[
 	SquareCount,
 	AngleSquareCount,
 	AngleSquareSchouten,
-	MomentumConservationIdentities,
-	IdentitiesBetweenKinematics,
-	TestMomentumConservation
+	MomentumConservationRedundancies,
+	MomentumConservation,
+	IndependentStructures,
+MomentumConservationIdentitiesOld,
+IdentitiesBetweenKinematics,
+TestMomentumConservation
     },
     Protected
 ]
