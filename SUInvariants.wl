@@ -177,19 +177,18 @@ EpsilonSU2 /: MakeBoxes[EpsilonSU2[a_][b_], StandardForm | TraditionalForm] := E
 TauBoxSU2[A_][a_, b_] :=
     TemplateBox[{A,a, b}, "TauSU2",
         DisplayFunction -> (SubscriptBox[SuperscriptBox["\[Sigma]",RowBox[{#1}]],RowBox[{#2,#3}]]&),
-        InterpretationFunction -> (RowBox[{"TauSU2","[",RowBox[{#1,"]","[",#2,",",#3}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"TauSU2","[",#1,"]","[",#2,",",#3,"]"}]&)]
 TauSU2 /: MakeBoxes[TauSU2[A_][a_, b_], StandardForm | TraditionalForm] := TauBoxSU2[ToBoxes[A]][ToBoxes[a], ToBoxes[b]]
 
 TauBoxSU2[A_,a_][ b_] :=
     TemplateBox[{A,a, b}, "TauSU2",
         DisplayFunction -> (SubsuperscriptBox[SuperscriptBox["\[Sigma]",RowBox[{#1}]],RowBox[{#3}],RowBox[{#2}]]&),
-        InterpretationFunction -> (RowBox[{"TauSU2","[",RowBox[{#1 ",",#2,"]","[",",",#3}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"TauSU2","[",#1, ",",#2,"]","[",#3,"]"}]&)]
 TauSU2 /: MakeBoxes[TauSU2[A_,a_][ b_], StandardForm | TraditionalForm] := TauBoxSU2[ToBoxes[A],ToBoxes[a]][ ToBoxes[b]]
-
 TauBoxSU2[A_,a_, b_] :=
     TemplateBox[{A,a, b}, "TauSU2",
         DisplayFunction -> (SuperscriptBox["\[Sigma]",RowBox[{#1,#2,#3}]]&),
-        InterpretationFunction -> (RowBox[{"TauSU2","[",RowBox[{#1 ",",#2,",",#3}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"TauSU2","[",#1 ,",",#2,",",#3,"]"}]&)]
 TauSU2 /: MakeBoxes[TauSU2[A_,a_, b_], StandardForm | TraditionalForm] := TauBoxSU2[ToBoxes[A],ToBoxes[a], ToBoxes[b]]
 
 
@@ -200,7 +199,7 @@ TauSU2 /: MakeBoxes[TauSU2[A_,a_, b_], StandardForm | TraditionalForm] := TauBox
 StructureBoxSU2[A_,B_, C_] :=
     TemplateBox[{A,B, C}, "StructureConstantSU2",
         DisplayFunction ->(SuperscriptBox["\[Epsilon]",RowBox[{#1,#2,#3}]]&),
-        InterpretationFunction -> (RowBox[{"StructureConstantSU2","[",RowBox[{#1 ",",#2,",",#3}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"StructureConstantSU2","[",RowBox[{#1, ",",#2,",",#3}],"]"}]&)]
 StructureConstantSU2 /: MakeBoxes[StructureConstantSU2[A_,B_, C_], StandardForm | TraditionalForm] := StructureBoxSU2[ToBoxes[A],ToBoxes[B], ToBoxes[C]]
 
 
@@ -353,7 +352,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 (*Todo!!! For the SU(2) group it is enough a function which transforms a double epsilon into a combination of deltas. Otherwise the duplicates can be isolated using the Complement function for the two lists of three indices. For now this is implemented in ContractSU2*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Generation of independent invariant tensors*)
 
 
@@ -414,7 +413,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 ]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*From the representation structure to the (independent&simplified) invariant tensors*)
 
 
@@ -603,11 +602,21 @@ CLabel /: MakeBoxes[CLabel[x_],StandardForm|TraditionalForm] := CBox[ToBoxes[x]]
 (*Generators*)
 
 
+(*Old modified by Manuel*)
+(*TauBoxSU3[A__,a_, b_] :=
+    TemplateBox[{a, b,A}, "TauSU3",
+        DisplayFunction -> (SubscriptBox[SuperscriptBox["\[Tau]",RowBox[{##3,#1}]],RowBox[{#2}]]&),
+        InterpretationFunction -> (RowBox[{"TauSU3","[",##3,",",#1,",",#2,"]"}]&)];
+        
+TauSU3 /: MakeBoxes[TauSU3[A__,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[Sequence@@(ToBoxes/@{A}),ToBoxes[a], ToBoxes[b]]
+*)
+
+(*Manuel's new version. Non elegantissimo ma funziona sempre (credo)*)
 TauBoxSU3[A__,a_, b_] :=
     TemplateBox[{A,a, b}, "TauSU3",
-        DisplayFunction -> (SubscriptBox[SuperscriptBox["\[Tau]",RowBox[{A,a}]],RowBox[{b}]]&),
-        InterpretationFunction -> (RowBox[{"TauSU3","[",RowBox[{A ",",a,",",b}],"]"}]&)]
-TauSU3 /: MakeBoxes[TauSU3[A__,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[Sequence@@(ToBoxes/@{A}),ToBoxes[a], ToBoxes[b]]
+        DisplayFunction -> (Evaluate@SubscriptBox[SuperscriptBox["\[Tau]",RowBox[{TemplateSlotSequence[{1,Length[{A}]}],Slot[Length[{A}]+1]}]],RowBox[{Slot[Length[{A}]+2]}]]&)];
+        
+TauSU3 /: MakeBoxes[TauSU3[A__,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[Sequence@@(ToBoxes/@{A}),ToBoxes[a], ToBoxes[b]];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -617,7 +626,7 @@ TauSU3 /: MakeBoxes[TauSU3[A__,a_, b_], StandardForm | TraditionalForm] := TauBo
 DeltaBoxSU3[a_, b_] :=
     TemplateBox[{a, b}, "DeltaSU3",
         DisplayFunction -> (SubsuperscriptBox["\[Delta]",RowBox[{#2}],RowBox[{#1}]]&),
-        InterpretationFunction -> (RowBox[{"DeltaSU3","[",RowBox[{#1 ",",#2}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"DeltaSU3","[",RowBox[{#1 ,",",#2}],"]"}]&)]
 DeltaSU3 /: MakeBoxes[DeltaSU3[a_, b_], StandardForm | TraditionalForm] := DeltaBoxSU3[ToBoxes[a], ToBoxes[b]]
 
 
@@ -653,11 +662,19 @@ DeltaAdjSU3 /: MakeBoxes[DeltaAdjSU3[A_, B_], StandardForm | TraditionalForm] :=
 (*Trace structures*)
 
 
-TraceBoxSU3[A__] :=
+(*Old*)
+(*TraceBoxSU3[A__] :=
     TemplateBox[{A}, "TraceSU3",
         DisplayFunction -> (SuperscriptBox["\[Tau]",RowBox[{##}]]&),
         InterpretationFunction -> (RowBox[{"TraceSU3","[",RowBox[{##}],"]"}]&)]
-TraceSU3 /: MakeBoxes[TraceSU3[A__], StandardForm | TraditionalForm] := TraceBoxSU3[Sequence@@(ToBoxes/@{A})]
+TraceSU3 /: MakeBoxes[TraceSU3[A__], StandardForm | TraditionalForm] := TraceBoxSU3[Sequence@@(ToBoxes/@{A})]*)
+
+(*Manuel version*)
+TraceBoxSU3[A__] :=
+    TemplateBox[{A}, "TraceSU3",
+        DisplayFunction -> (SuperscriptBox["\[Tau]",RowBox[{##}]]&)];
+        
+TraceSU3 /: MakeBoxes[TraceSU3[A__], StandardForm | TraditionalForm] := TraceBoxSU3[Sequence@@(ToBoxes/@{A})];
 
 
 (* ::Subsubsection::Closed:: *)
