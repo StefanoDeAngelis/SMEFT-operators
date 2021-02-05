@@ -121,13 +121,13 @@ Begin["`su2`"]
 iBox[x_]:=
 	TemplateBox[{x},"iLabel",
 		DisplayFunction->(SubscriptBox["i",RowBox[{#}]]&),
-		InterpretationFunction->(RowBox[{"iLabel","[",RowBox[#],"]"}]&)]
+		InterpretationFunction->(RowBox[{"iLabel","[",RowBox[{#}],"]"}]&)]
 iLabel /: MakeBoxes[iLabel[x_],StandardForm|TraditionalForm] := iBox[ToBoxes[x]]
 
 xBox[x_,n_]:=
 	TemplateBox[{x,n},"xLabel",
 		DisplayFunction->(SubscriptBox[#2,RowBox[{#1}]]&),
-		InterpretationFunction->(RowBox[{"xLabel","[",RowBox[#1],",",RowBox[#2]"]"}]&)]
+		InterpretationFunction->(RowBox[{"xLabel","[",RowBox[{#1}],",",RowBox[{#2}]"]"}]&)]
 xLabel /: MakeBoxes[xLabel[x_,n_],StandardForm|TraditionalForm] := xBox[ToBoxes[x],ToBoxes[FromCharacterCode[n]]]
 
 
@@ -138,13 +138,13 @@ xLabel /: MakeBoxes[xLabel[x_,n_],StandardForm|TraditionalForm] := xBox[ToBoxes[
 IBox[x_]:=
 	TemplateBox[{x},"ILabel",
 		DisplayFunction->(SubscriptBox["I",RowBox[{#}]]&),
-		InterpretationFunction->(RowBox[{"ILabel","[",RowBox[#],"]"}]&)]
+		InterpretationFunction->(RowBox[{"ILabel","[",RowBox[{#}],"]"}]&)]
 ILabel /: MakeBoxes[ILabel[x_],StandardForm|TraditionalForm] := IBox[ToBoxes[x]]
 
 XBox[x_]:=
 	TemplateBox[{x},"XLabel",
 		DisplayFunction->(SubscriptBox["X",RowBox[{#}]]&),
-		InterpretationFunction->(RowBox[{"XLabel","[",RowBox[#],"]"}]&)]
+		InterpretationFunction->(RowBox[{"XLabel","[",RowBox[{#}],"]"}]&)]
 XLabel /: MakeBoxes[XLabel[x_],StandardForm|TraditionalForm] := XBox[ToBoxes[x]]
 
 
@@ -571,12 +571,12 @@ Begin["`suN`"]
 aBox[x_]:=
 	TemplateBox[{x},"aLabel",
 		DisplayFunction->(SubscriptBox["a",RowBox[{#}]]&),
-		InterpretationFunction->(RowBox[{"aLabel","[",RowBox[#],"]"}]&)]
+		InterpretationFunction->(RowBox[{"aLabel","[",RowBox[{#}],"]"}]&)]
 
 bBox[x_]:=
 	TemplateBox[{x},"bLabel",
 		DisplayFunction->(SubscriptBox["b",RowBox[{#}]]&),
-		InterpretationFunction->(RowBox[{"bLabel","[",RowBox[#],"]"}]&)]
+		InterpretationFunction->(RowBox[{"bLabel","[",RowBox[{#}],"]"}]&)]
 		
 aLabel /: MakeBoxes[aLabel[x_],StandardForm|TraditionalForm] :=aBox[ToBoxes[x]]
 bLabel /: MakeBoxes[bLabel[x_],StandardForm|TraditionalForm] :=bBox[ToBoxes[x]]
@@ -589,13 +589,13 @@ bLabel /: MakeBoxes[bLabel[x_],StandardForm|TraditionalForm] :=bBox[ToBoxes[x]]
 ABox[x_]:=
 	TemplateBox[{x},"ALabel",
 		DisplayFunction->(SubscriptBox["A",RowBox[{#}]]&),
-		InterpretationFunction->(RowBox[{"ALabel","[",RowBox[#],"]"}]&)]
+		InterpretationFunction->(RowBox[{"ALabel","[",RowBox[{#}],"]"}]&)]
 ALabel /: MakeBoxes[ALabel[x_],StandardForm|TraditionalForm] := ABox[ToBoxes[x]]
 
 CBox[x_]:=
 	TemplateBox[{x},"CLabel",
 		DisplayFunction->(SubscriptBox["C",RowBox[{#}]]&),
-		InterpretationFunction->(RowBox[{"CLabel","[",RowBox[#],"]"}]&)]
+		InterpretationFunction->(RowBox[{"CLabel","[",RowBox[{#}],"]"}]&)]
 CLabel /: MakeBoxes[CLabel[x_],StandardForm|TraditionalForm] := CBox[ToBoxes[x]]
 
 
