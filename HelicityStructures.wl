@@ -15,40 +15,16 @@ PrimaryAmplitudeHelicityFields::usage = "..."
 PrimaryAmplitudeHelicity::usage = "..."
 AmplitudesStructure::usage = "..."
 AmplitudesScalars::usage = "..."
-HelicityStructure::usage = "..."
-PartitionMomenta::usage = "..."
-MomentaSelection::usage = "..."
-SpinorStructure::usage = "..."
-IsSingletDoable::usage = "..."
 
-BracketBox::usage = "..."
-Bracket::usage = "..."
-FromMatrixToSpinors::usage = "..."
-FromStructuresToSpinors::usage = "..."
-AnglesAndSquares::usage = "..."
-MatterContent::usage = "..."
+IndependentFormFactors::usage = "..."
 IndependentHelicityFactors::usage = "..."
-
-SchoutenIdentities::usage = "..."
-AngleCount::usage = "..."
-SquareCount::usage = "..."
-AngleSquareCount::usage = "..."
-AngleSquareSchouten::usage = "..."
-
-MomentumConservationIdentitiesOld::usage = "..."
-IdentitiesBetweenKinematics::usage = "..."
-TestMomentumConservation::usage = "..."
-
-MomentumConservationRedundancies::usage = "..."
-MomentumConservation::usage = "..."
-IndependentStructures::usage = "..."
 
 
 (* ::Section:: *)
 (*Classification*)
 
 
-Begin["`Classification`"]
+Begin["`Private`"]
 
 
 (* ::Subsection:: *)
@@ -124,6 +100,13 @@ AmplitudesScalars[d_]:=
 	]
 
 
+(* ::Subsubsection::Closed:: *)
+(*Number of fields*)
+
+
+NumberFields[d_][{{gM_,gP_},{fM_,fP_},der_}]:=d-gM-gP-1/2*(fM+fP)-der
+
+
 (* ::Subsection:: *)
 (*Helicity and momentum structures*)
 
@@ -160,17 +143,14 @@ HelicityStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:=
 (*Partition of momenta*)
 
 
-PartitionMomenta[moms_,partition_]:= (*Given a certain partition and a list of momenta of certain fields (e.g. helicity minus gluons), this function repeat and order the momenta according to the partition*)
-	If[ListQ[partition], (*in the following function, this function will encounter some zeros, instead of a list associated to a partition. In this case it gives Nothing*)
+PartitionMomenta[moms_List,partition_List]:= (*Given a certain partition and a list of momenta of certain fields (e.g. helicity minus gluons), this function repeat and order the momenta according to the partition*) (*in the following function, this function will encounter some zeros, instead of a list associated to a partition. In this case it gives Nothing*)
 		Flatten[
 			Table[
 				moms[[i]],
 				{i,1,Length[partition]},
 				{j,1,partition[[i]]} (*repeat the corresponding object as many times as it says the element of the partition*)
 			] (*do it for all the elements of the partition*)
-		],
-		Return[Nothing]
-	]
+		]
 
 
 (* ::Subsubsection::Closed:: *)
@@ -179,6 +159,7 @@ PartitionMomenta[moms_,partition_]:= (*Given a certain partition and a list of m
 
 MomentaSelection[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*generates all the independent momenta, their corresponding partitions of partitions and assign all of them to the lists of momenta*)
 	Module[{scals=d-2(gluonsM+gluonsP)-3/2*(fermM+fermP)-ders,moms,partitions,numberfields},
+		If[scals<0,Message[MomentaSelection::negative];Return[Null]];
 		numberfields=gluonsM+gluonsP+fermM+fermP+scals;
 		moms=Table[i,{i,1,numberfields-1}];(*momentum conservation is not taken into account simply by eliminating the last momentum. There are cases (for d\[GreaterEqual]7) where the last momentum gives automatically zero,
 		and then we need to exclude the second last momentum, and so forth.*)
@@ -194,11 +175,14 @@ MomentaSelection[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*generates 
 ]
 
 
+MomentaSelection::negative="The number of scalars is negative"
+
+
 (* ::Subsubsection::Closed:: *)
 (*Spinor structures*)
 
 
-SpinorStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*appends the list of momenta to both the angles and the squares bracket lists*)
+SpinorStructure[d_Integer][{{gluonsM_Integer,gluonsP_Integer},{fermM_Integer,fermP_Integer},ders_Integer}]:= (*appends the list of momenta to both the angles and the squares bracket lists*)
 	Module[{helicity,momentas,spinors},
 		helicity=HelicityStructure[d][{{gluonsM,gluonsP},{fermM,fermP},ders}];
 		momentas=MomentaSelection[d][{{gluonsM,gluonsP},{fermM,fermP},ders}];
@@ -217,162 +201,148 @@ SpinorStructure[d_][{{gluonsM_,gluonsP_},{fermM_,fermP_},ders_}]:= (*appends the
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Is a singlet doable?*)
 
 
-IsSingletDoable[{List1_,List2_}]:= (*the counting of one element can never exceed half of the total number of countings*)
-	Module[{counts1=Counts[List1],counts2=Counts[List2],test1,test2},
-		(*List1 and List2 are made of repeated elements, for example {1,1,1,2,2,3,3,6}*)
+(* ::Text:: *)
+(*This function can be suppressed in the future to speed up the computation. The momenta and the helicity structures can be generated simply with numbers associated to each leg, as in IndependentHelicityFactors.*)
 
+
+IsSingletDoable[n_][{List1_List,List2_List}]:= (*the counting of one element can never exceed half of the total number of countings*)
+	Module[{test1,test2,zeros},
+		(*List1 and List2 are made of repeated elements, for example {1,1,1,2,2,3,3,6}*)
+		
+		zeros=Map[{#,0}&,{Complement[#,List1],Complement[#,List2]}&@Range[n],{2}];
+		
 		test1=
 			And@@
 				Table[
-					counts1[[i]]<=Length[List1]/2 ,
-					{i,1,Length[counts1]}
-				];
+					#1[[i]]<=#2/2 ,
+					{i,1,Length[#1]}
+				]&[Counts[List1],Length[List1]];
 
 		test2=
 			And@@
 				Table[
-					counts2[[i]]<=Length[List2]/2 ,
-					{i,1,Length[counts2]}
-				];
+					#1[[i]]<=#2/2 ,
+					{i,1,Length[#1]}
+				]&[Counts[List2],Length[List2]];
 
 		If[
 			test1&&test2,
-			Return[
-				{Tally[List1],Tally[List2]}
-			],
+			Return[Sort/@Join@@@Transpose[{{Tally[List1],Tally[List2]},zeros}]],
 			Return[Nothing];
 		];
 	]
 
 
-End[]
-
-
 (* ::Section:: *)
-(*Form factors*)
-
-
-Begin["`FormFactors`"]
+(*Form Factors & Helicity Factors*)
 
 
 (* ::Subsubsection::Closed:: *)
-(*(Generic) Bracket*)
+(*From Adjacency Matrices to Spinor Formula*)
 
 
-BracketBox[a_, b_] :=
-    TemplateBox[{a, b}, "Bracket",
-        DisplayFunction -> (RowBox[{"(",RowBox[{#1,"|",#2}],")"}]&),
-        InterpretationFunction -> (RowBox[{"Bracket","[",RowBox[{#1,",",#2}],"]"}]&)]
-
-Bracket /: MakeBoxes[Bracket[a_, b_], StandardForm | TraditionalForm] := BracketBox[ToBoxes[a], ToBoxes[b]]
-
-Bracket[a_,b_]/;\[Not]OrderedQ[{a,b}]:=-Bracket[b,a]
+FromMatrixToSpinors[{adjAngle_,adjSquare_},labels_List]:=
+	Times@@
+		(SpinorAngleBracket[labels[[#[[1,1]]]],labels[[#[[1,2]]]]]^#[[2]]&/@Transpose[{adjAngle["NonzeroPositions"],adjAngle["NonzeroValues"]}])*
+	Times@@
+		(SpinorSquareBracket[labels[[#[[1,1]]]],labels[[#[[1,2]]]]]^#[[2]]&/@Transpose[{adjSquare["NonzeroPositions"],adjSquare["NonzeroValues"]}])
 
 
 (* ::Subsubsection::Closed:: *)
-(*From Adjacency Matrix to Spinor Formula*)
+(*Momentum Conservation*)
 
 
-FromMatrixToSpinors[adjacencymatrix_List,labels_List]:=
-	Module[{numberpoints=Length[labels]},
-		Product[
-			Power[
-				Bracket[labels[[i]],labels[[j]]],
-				adjacencymatrix[[i,j]] (*gives a bracket to the power indicated by the number of lines between the two corresponding points*)
-			],
-			{i,1,numberpoints-1},
-			{j,i+1,numberpoints}
+PlanarMomentumConservation[{angles_,squares_}]:=
+	Module[{nonzeroangles=angles["NonzeroPositions"],nonzerosquares=squares["NonzeroPositions"],n=Length[angles]},
+		If[
+			(MemberQ[nonzeroangles,{1,n-1}]&&MemberQ[nonzerosquares,{1,n-1}])||
+			(MemberQ[nonzeroangles,{n-1,n}]&&MemberQ[nonzerosquares,{_,n-1}])||
+			(MemberQ[nonzerosquares,{n-1,n}]&&MemberQ[nonzeroangles,{_,n-1}])||
+			(MemberQ[nonzerosquares,{1,n}]&&MemberQ[nonzeroangles,{1,n-1}])||
+			(MemberQ[nonzerosquares,{1,n-1}]&&MemberQ[nonzeroangles,{1,n}]),
+			Return[Nothing],
+			Return[{angles,squares}]
 		]
 	]
 
 
-(* ::Subsubsection::Closed:: *)
-(*From structures to brackets*)
+(* ::Subsubsection:: *)
+(*From structure to Angles&Squares structures*)
 
 
-FromStructuresToSpinors[pointslines_List]:= (*given the number of labels of the points and the number of lines coming out from each point, this functions generates all the independent bracket structures*)
-	Module[{labels,lines,numberpoints,graphs,structures},
+HelicityStructures[{anglestructure_List,squarestructure_List}]:=
+	Module[{formfactors,angles,squares},
 
-		numberpoints=Length[pointslines];
-		labels=Table[pointslines[[i,1]],{i,1,numberpoints}];
-		lines=Table[pointslines[[i,2]],{i,1,numberpoints}];
+		angles=AllNonIntersectionGraphs[Part[#,2]&/@anglestructure];
+		squares=AllNonIntersectionGraphs[Part[#,2]&/@squarestructure];
 
-		graphs=AllNonIntersectionGraphs[lines];
-
-		structures=FromMatrixToSpinors[#,labels]&/@graphs;
-		Return[structures];
-	]
-
-
-(* ::Subsubsection::Closed:: *)
-(*From bracket to Spinor Helicity*)
-
-
-AnglesAndSquares[{anglestructure_List,squarestructure_List}]:=
-	Module[{formfactors,numberff,angles,squares},
-
-		If[anglestructure=={},
-			angles={1},
-			angles=ReplaceAll[FromStructuresToSpinors[anglestructure],Bracket->SpinorAngleBracket]
+		formfactors=Tuples[{angles,squares}];
+		
+		If[
+			anglestructure[[-2,2]]+squarestructure[[-2,2]]!=0||anglestructure[[1,2]]+squarestructure[[1,2]]!=0,
+			formfactors=PlanarMomentumConservation/@formfactors
 		];
-		If[squarestructure=={},
-			squares={1},
-			squares=ReplaceAll[FromStructuresToSpinors[squarestructure],Bracket->SpinorSquareBracket]
-		];
-
-		formfactors=
-			Times@@@
-				Tuples[
-					{angles,squares} (*formfactors so far is a list of {angles,squares}, then Times@@{angles,squares} \[Rule] angles * squares. *)
-				];
-
+	
+		formfactors=FromMatrixToSpinors[#,Part[#,1]&/@anglestructure]&/@formfactors;
+	
 		Return[formfactors];
-
 	]
 
 
-(* ::Subsubsection::Closed:: *)
-(*Matter Content*)
+(* ::Subsection:: *)
+(*Independent Form Factors*)
 
 
-MatterContent[d_,helicityfactor_]:=
-	Module[{matter,hel={-2,2,-1,1},scalars},
-		matter=HelicityWeight[helicityfactor];
-		matter=Table[Count[matter,_?(MatchQ[#[[2]],hel[[i]]]&)],{i,4}];
-		scalars=d-MassDimension[helicityfactor]-Total[matter];
-		matter=Append[matter,scalars];
-		Return[{matter,helicityfactor}]
-	]
+Options[IndependentFormFactors]={"MatterContent"->True}
 
-
-(* ::Subsubsection::Closed:: *)
-(*Independent Helicity Factors*)
-
-
-Options[IndependentHelicityFactors]={"MatterContent"->True}
-
-IndependentHelicityFactors[d_,OptionsPattern[]]:=
+IndependentFormFactors[d_Integer,OptionsPattern[]]:=
 	Module[{structures},
-		structures=Flatten[SpinorStructure[d][#]&/@AmplitudesStructure[d],1];
-
-		structures=IsSingletDoable[#]&/@structures;
-
-		structures=Flatten[AnglesAndSquares[#]&/@structures];
+		
+		structures=IsSingletDoable[#1][#2]&@@@Thread[{NumberFields[d][#],SpinorStructure[d][#]}]&/@AmplitudesStructure[d];
 
 		If[
 			OptionValue["MatterContent"],
-			structures=MatterContent[d,#]&/@structures;
+			structures=Tuples/@Thread[{List/@List/@Flatten/@AmplitudesScalars[d],structures}]
 		];
+
+		structures=Flatten[structures,1];
+		
+		If[
+			OptionValue["MatterContent"],
+			structures=Flatten[#,1]&@(Tuples/@(MapAt[HelicityStructures,#,2]&/@structures)),
+			structures=Flatten[HelicityStructures[#]&/@structures]
+		];	
 
 		Return[structures]
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
+(*Independent Helicity Factors*)
+
+
+IndependentHelicityFactors[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]]]&)]:=
+	Module[{labels=Part[#,1]&/@{list},angles,squares,structures},
+	
+		{angles,squares}={Abs[#]-#,Abs[#]+#}&@(Part[#,2]&/@{list});
+		
+		structures=Append[#,0]&/@PermutationsOfPartitions[dim-Total[angles]/2-Total[squares]/2,Length[angles]-1];
+		
+		structures={angles+#,squares+#}&/@structures;
+		
+		structures=If[Length[#]<2,Nothing,#]&/@Map[IsLoopLessDoable,structures,{2}];
+		
+		structures=HelicityStructures/@Map[Thread[{labels,#}]&,structures,{2}];
+		
+		Return[Flatten@structures]
+	]
+
+
+(* ::Subsection:: *)
 (*Schouten Identities*)
 
 
@@ -503,83 +473,6 @@ AngleSquareSchouten[count_List,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
-(*Old Momentum Conservation*)
-
-
-MomentumConservationIdentitiesOld[length_Integer,sign_]:=
-	If[
-		sign>0,
-		Table[Sum[SpinorAngleBracket[i,k]SpinorSquareBracket[k,length],{k,1,length-1}]==0,{i,1,length-1}],
-		If[
-			sign<0,
-			Table[Sum[SpinorAngleBracket[length,k]SpinorSquareBracket[k,i],{k,1,length-1}]==0,{i,1,length-1}],
-			{}
-		]
-	]
-	
-IdentitiesBetweenKinematics[{{fields_},operators_}]:=
-	Module[{num=Total[fields],lasthelicity,helicities={-2,2,-1,1,0},weights={2,2,3/2,3/2,1},schouten,momcons={},independent={operators[[1]]},ders},
-		ders=MassDimension[operators[[1]]]+num-Sum[fields[[i]]*weights[[i]],{i,1,5}];
-		If[Length[operators]==1||ders==0,Return[{{fields},operators}]];
-		Do[If[fields[[5-j]]!=0,lasthelicity=5-j;Break[]],{j,0,4}];
-		lasthelicity=helicities[[lasthelicity]];
-		schouten=AngleSquareCount[#,num]&/@operators;
-		schouten=AngleSquareSchouten[DeleteDuplicates[schouten],"Substitutions"->False];
-		momcons=MomentumConservationIdentitiesOld[num,lasthelicity];
-		If[ders>=2,momcons=Join[momcons,{Sum[SpinorAngleBracket[j,i]SpinorSquareBracket[i,j],{i,1,num-1},{j,i+1,num-1}]==0}]];
-		Do[
-			If[
-				\[Not]MatchQ[
-					Simplify[operators[[i]],Join[Table[operators[[j]]==0,{j,1,i-1}],schouten,momcons]],
-					0
-				],
-				AppendTo[independent,operators[[i]]];
-			],
-			{i,2,Length[operators]}
-		];
-		Return[{{fields},independent}];
-	]
-	
-TestMomentumConservation[d_]:=
-	Module[{ff=IndependentHelicityFactors[d]},
-		ff=Map[DeleteDuplicates,Transpose/@GatherBy[ff,First],{2}];
-		ff=IdentitiesBetweenKinematics/@ff;
-		(*ff=If[#[[2]]=={},Nothing,#]&/@ff;*)
-		ff=Flatten[Tuples/@ff,1];
-		Return[ff]
-	]
-
-
-(* ::Subsubsection::Closed:: *)
-(*Is Momentum Conservation implemented correctly?*)
-
-
-MomentumConservationRedundancies[length_Integer,sign_]:=
-	Append[
-		If[
-			sign>0,
-			Append[Table[SpinorAngleBracket[i,length-1]^a_. SpinorSquareBracket[length-1,length]^b_.:>0,{i,1,length-2}],SpinorAngleBracket[1,length-1]^a_.*SpinorSquareBracket[1,length]^b_.:>0],
-			If[
-				sign<0,
-				Append[Table[SpinorAngleBracket[length-1,length]^a_. SpinorSquareBracket[i,length-1]^b_.:>0,{i,1,length-2}],SpinorAngleBracket[1,length]^a_. SpinorSquareBracket[1,length-1]^b_.:>0],
-				{}
-			]
-		],
-		SpinorAngleBracket[1,length-1]^a_. SpinorSquareBracket[1,length-1]^b_.:>0
-	]
-
-
-MomentumConservation[{fields_List,operator_}]:=
-	Module[{num=Total[fields],lasthelicity,helicities={-2,2,-1,1,0}},
-		Do[If[fields[[5-j]]!=0,lasthelicity=5-j;Break[]],{j,0,4}];
-		If[ReplaceAll[operator,MomentumConservationRedundancies[num,helicities[[lasthelicity]]]]===0,Return[Nothing],Return[{fields,operator}]]
-	]
-
-
-IndependentStructures[d_]:=MomentumConservation/@IndependentHelicityFactors[d]
-
-
 End[]
 
 
@@ -587,40 +480,7 @@ End[]
 (*Attributes*)
 
 
-SetAttributes[
-    {PrimaryAmplitudeHelicityFields,
-	PrimaryAmplitudeHelicity,
-	AmplitudesStructure,
-	AmplitudesScalars,
-	HelicityStructure,
-	IndependentMomenta,
-	PartitionMomenta,
-	AllPartitions,
-	AllMomentaPartition,
-	MomentaSelection,
-	SpinorStructure,
-	IsSingletDoable,
-	BracketBox,
-	Bracket,
-	FromMatrixToSpinors,
-	FromStructuresToSpinors,
-	AnglesAndSquares,
-	MatterContent,
-	IndependentHelicityFactors,
-	SchoutenIdentities,
-	AngleCount,
-	SquareCount,
-	AngleSquareCount,
-	AngleSquareSchouten,
-	MomentumConservationRedundancies,
-	MomentumConservation,
-	IndependentStructures,
-MomentumConservationIdentitiesOld,
-IdentitiesBetweenKinematics,
-TestMomentumConservation
-    },
-    Protected
-]
+Protect@@Names["HelicityStructures`*"]
 
 
 EndPackage[]
