@@ -13,11 +13,15 @@ BeginPackage["GraphGenerator`"]
 
 PermutationsOfPartitions::usage = "..."
 PermutationMatrix::usage = "..."
+
 IsLoopLessDoable::usage = "..."
-AssignLines::usage = "..."
+
 AllGraphs::usage = "..."
-IsGraphNonIntesercting::usage = "..."
-AllNonIntersectionGraphs::usage = "..."
+ComputedGraphs::usage = "..."
+
+AllNonIntersectingGraphs::usage = "..."
+ComputedNonIntersectingGraphs::usage = "..."
+
 SchoutenCrossing::usage = "..."
 DrawAdjacencyGraph::usage = "..."
 
@@ -53,7 +57,7 @@ PermutationsOfPartitions[counting_,length_]:= (*this function generates the perm
 PermutationMatrix[p_List]:=IdentityMatrix[Length[p]][[p]]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Is a loop-less graph doable?*)
 
 
@@ -129,11 +133,13 @@ GraphToMatrix[list_List]:= (*from the graph (the assigned lines), this gives the
 (*GraphToMatrix[list_List]:=(#+Transpose[#])&@(PadLeft[#,Length[list[[1]]]+1]&/@list)*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*All graphs*)
 
 
-AllGraphs[lines_List]:=
+AllGraphs[lines___Integer]:=AllGraphs[{lines}]
+
+Graphs[lines_List]:=ComputedGraphs[lines]=
 	Module[{adjacencymatrices,perm=PermutationMatrix[Ordering[lines]],locallines=Sort[DeleteCases[lines,0]],i},
 	
 		(*If[locallines==={},Return[{Table[0,#,#]&@Count[lines,0]}]];*)
@@ -150,10 +156,14 @@ AllGraphs[lines_List]:=
 		
 		adjacencymatrices=(Inverse[perm] . # . perm)&/@adjacencymatrices;
 		
-		adjacencymatrices=SparseArray/@UpperTriangularize/@adjacencymatrices;
+		adjacencymatrices = SparseArray/@UpperTriangularize/@adjacencymatrices;
 
 		Return[adjacencymatrices];
 	]
+
+AllGraphs[lines_List]:=
+	If[Head[#]===List,#,Graphs[lines]]&@
+		ComputedGraphs[lines]
 
 
 (* ::Subsection::Closed:: *)
@@ -191,12 +201,15 @@ IsGraphNonIntesercting[adjacencymatrix_?(MatrixQ[#]&),OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*All the Non-Intersecting Graphs*)
 
 
-AllNonIntersectionGraphs[lines_List]:=
-	IsGraphNonIntesercting/@AllGraphs[lines]
+NonIntersectingGraphs[lines_List]:=ComputedNonIntersectingGraphs[lines]=IsGraphNonIntesercting/@AllGraphs[lines]
+	
+AllNonIntersectingGraphs[lines_List]:=
+	If[Head[#]===List,#,NonIntersectingGraphs[lines]]&@
+		ComputedNonIntersectingGraphs[lines]
 
 
 (* ::Subsection::Closed:: *)
@@ -206,7 +219,7 @@ AllNonIntersectionGraphs[lines_List]:=
 (*This function loosen ONE of the crossings in the graphs.*)
 
 
-SchoutenCrossing[adjacencymatrix_List]:=
+SchoutenCrossing[adjacencymatrix_?MatrixQ]:=
 	Module[{matrixdim=Length[adjacencymatrix],positions={},matrix1,matrix2},
 		Do[
 			If[
@@ -235,7 +248,7 @@ SchoutenCrossing[adjacencymatrix_List]:=
 			matrix2[[positions[[1]],positions[[4]]]]++;
 			matrix2[[positions[[2]],positions[[3]]]]++;
 			
-			Return[{matrix1,matrix2}],
+			Return[If[Head[#]===SparseArray,SparseArray@#,#]&/@{matrix1,matrix2}],
 			
 			Return[adjacencymatrix]
 		];
@@ -261,7 +274,7 @@ End[]
 (*Attributes*)
 
 
-Protect@@Names["GraphGenerator`*"]
+Protect@@DeleteCases[Names["GraphGenerator`*"],"ComputedGraphs"|"ComputedNonIntersectingGraphs"]
 
 
 EndPackage[]

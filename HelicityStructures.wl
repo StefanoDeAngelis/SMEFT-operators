@@ -19,6 +19,10 @@ AmplitudesScalars::usage = "..."
 IndependentFormFactors::usage = "..."
 IndependentHelicityFactors::usage = "..."
 
+SchoutenIdentities::usage = "..."
+SingleStructureIdentities::usage = "..."
+AllIdentities::usage = "..."
+
 
 (* ::Section:: *)
 (*Classification*)
@@ -201,7 +205,7 @@ SpinorStructure[d_Integer][{{gluonsM_Integer,gluonsP_Integer},{fermM_Integer,fer
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Is a singlet doable?*)
 
 
@@ -245,7 +249,15 @@ IsSingletDoable[n_][{List1_List,List2_List}]:= (*the counting of one element can
 (*From Adjacency Matrices to Spinor Formula*)
 
 
-FromMatrixToSpinors[{adjAngle_,adjSquare_},labels_List]:=
+FromMatrixToSpinorsAngle[adjAngle_?MatrixQ,labels_List]:=
+	Times@@
+		(SpinorAngleBracket[labels[[#[[1,1]]]],labels[[#[[1,2]]]]]^#[[2]]&/@Transpose[{adjAngle["NonzeroPositions"],adjAngle["NonzeroValues"]}])
+		
+FromMatrixToSpinorsSquare[adjSquare_?MatrixQ,labels_List]:=
+	Times@@
+		(SpinorSquareBracket[labels[[#[[1,1]]]],labels[[#[[1,2]]]]]^#[[2]]&/@Transpose[{adjSquare["NonzeroPositions"],adjSquare["NonzeroValues"]}])
+
+FromMatrixToSpinors[{adjAngle_?MatrixQ,adjSquare_?MatrixQ},labels_List]:=
 	Times@@
 		(SpinorAngleBracket[labels[[#[[1,1]]]],labels[[#[[1,2]]]]]^#[[2]]&/@Transpose[{adjAngle["NonzeroPositions"],adjAngle["NonzeroValues"]}])*
 	Times@@
@@ -270,7 +282,7 @@ PlanarMomentumConservation[{angles_,squares_}]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From structure to Angles&Squares structures*)
 
 
@@ -293,7 +305,7 @@ HelicityStructures[{anglestructure_List,squarestructure_List}]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Independent Form Factors*)
 
 
@@ -343,134 +355,205 @@ IndependentHelicityFactors[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]
 
 
 (* ::Subsection:: *)
+(*All Identities*)
+
+
+(* ::Subsubsection::Closed:: *)
 (*Schouten Identities*)
 
 
-Options[SchoutenIdentities]={"Substitutions"->True};
+Options[SchoutenIdentities]={"Bracket"->"Angle"}
 
-SchoutenIdentities[pointslines_List,OptionsPattern[]]:=
-	Module[{lines,labels,numberpoints=Length[pointslines],intersecting,numberinter,nonintersecting,numbernoninter,replacements,graphlabels,x,y},
-	
-		If[pointslines=={},Return[{}]];
+SchoutenIdentities[{lines__Integer},labels_List,OptionsPattern[]]:=
+	Block[{intersecting,numberinter,nonintersecting,numbernoninter,replacements,graphlabels,x,y},
+		
+		intersecting=AllGraphs[{lines}]; (*generate all graphs*)
 
-		lines=Table[pointslines[[i,2]],{i,1,numberpoints}];
-		labels=Table[pointslines[[i,1]],{i,1,numberpoints}];
+		nonintersecting=AllNonIntersectingGraphs[{lines}]; (*select non-intersecting graphs*)
 
-		numberfundlabels=Count[lines,1];
-
-		intersecting=Map[PadLeft[#,numberpoints]&,Append[#,{}]&/@AllGraphs[lines],{2}]; (*generate all graphs*)
-
-		nonintersecting=IsGraphNonIntesercting/@intersecting; (*generate non-intersecting graphs*)
-		numbernoninter=Length[nonintersecting];
-
-		intersecting=Complement[intersecting,nonintersecting]; (*complement to take select the intersecting graphs*)
+		intersecting=Complement[intersecting,nonintersecting]; (*complement to select the intersecting graphs*)
 		numberinter=Length[intersecting];
-
+		numbernoninter=Length[nonintersecting];
+		
 		graphlabels=
 			Join[
 				Table[
-					intersecting[[i]]->x[i], (*assign labels to intersecting and intersecting graphs*)
+					{intersecting[[i]],x[i]}, (*assign labels to intersecting and intersecting graphs*)
 					{i,1,numberinter}
 				],
 				Table[
-					nonintersecting[[i]]->y[i], (*assign labels to intersecting and non-intersecting graphs*)
+					{nonintersecting[[i]],y[i]}, (*assign labels to intersecting and non-intersecting graphs*)
 					{i,1,numbernoninter}
 				]
 			];
-		
-		(*generators=Product[TauSU2[ILabel[labels[[i]]]][xLabel[labels[[i]],1],xLabel[labels[[i]],2]],{i,numberfundlabels+1,numberpoints}];*) (*senza motivo!*)
-
-		nonintersecting=
-			Table[
-				y[i]->FromMatrixToSpinors[nonintersecting[[i]],labels],
-				{i,1,numbernoninter}
-			];
 
 		replacements=
 			Table[
-				x[i]->Total[SchoutenCrossing[intersecting[[i]]]/.graphlabels],
-				{i,1,Length[intersecting]}
+				x[i]->Total[SchoutenCrossing[intersecting[[i]]]/.(Rule@@@graphlabels)],
+				{i,1,numberinter}
 			];
 			
+		If[
+			OptionValue["Bracket"]==="Angle",
+			graphlabels=MapAt[FromMatrixToSpinorsAngle[#,labels]&,#,{1}]&/@graphlabels,
+			If[
+				OptionValue["Bracket"]==="Square",
+				graphlabels=MapAt[FromMatrixToSpinorsSquare[#,labels]&,#,{1}]&/@graphlabels,
+				Message[SchoutenIdentities::opts];
+				Return[Null]
+			]
+		];
+		
+		graphlabels=Reverse/@Rule@@@graphlabels;
+			
 		replacements=
-			Table[
-				If[
-					OptionValue["Substitutions"],
-					FromMatrixToSpinors[intersecting[[i]],labels] -> Expand[x[i]//.replacements]/.nonintersecting,
-					FromMatrixToSpinors[intersecting[[i]],labels] - (Expand[x[i]//.replacements]/.nonintersecting)==0 (*some of these are present multiple times, DeleteDuplicates is need or something else. This happens when the angle structures are the same but the squares are different*)
+			Join[
+				Table[
+					{y[i],y[i]}/.graphlabels,
+					{i,1,numbernoninter}
 				],
-				{i,1,numberinter}
+				Table[
+					{x[i] , Flatten[x[i]//.replacements]}/.graphlabels,
+					{i,1,numberinter}
+				]
 			]; (*placing the repeated replacements inside the list speeds the function up*)
 
 		Return[replacements];
 
 ]
 
+SchoutenIdentities::opts="Bracket option must be either Angle or Square"
+
 
 (* ::Subsubsection::Closed:: *)
-(*Counting angles and squares*)
+(*Schouten + Momentum conservation for a single structure*)
 
 
-AngleCount[exp_,label_]:=
-	Join[
-		Cases[
-			{exp},
-			HoldPattern[SpinorAngleBracket[label,_]|SpinorAngleBracket[_,label]]:>1,
-			\[Infinity]
-		](*,
-		Cases[
-			{exp},
-			HoldPattern[S[label,_]|S[_,label]]\[RuleDelayed]1,
-			\[Infinity]
-		]*)
-	]//Length;
+SingleStructureIdentities[{{linesAngles__Integer},{linesSquares__Integer}},labels_List]:= (*for the momentum identities to work fine, it is necessary that the labels are ordered*)
+	Block[{allstructures,schoutened,Simp,length=Length[labels]},
 	
-SquareCount[exp_,label_]:=
-	Join[
-		Cases[
-			{exp},
-			HoldPattern[SpinorSquareBracket[label,_]|SpinorSquareBracket[_,label]]:>1,
-			\[Infinity]
-		](*,
-		Cases[
-			{exp},
-			HoldPattern[S[label,_]|S[_,label]]\[RuleDelayed]1,
-			\[Infinity]
-		]*)
-	]//Length;
-	
-AngleSquareCount[exp_Plus,length_Integer]:=Sequence@@DeleteDuplicates[AngleSquareCount[#,length]&/@(List@@exp)];
-
-AngleSquareCount[exp_,length_Integer]:=
-	Module[{angles,squares},
-		angles=
-			DeleteCases[
-				Table[{i,AngleCount[exp,i]},{i,length}],
-				_?(#[[2]]==0&)
+		allstructures=AllGraphs/@{{linesAngles},{linesSquares}};
+		allstructures=
+			{FromMatrixToSpinorsAngle[#,labels]&/@allstructures[[1]],
+			FromMatrixToSpinorsSquare[#,labels]&/@allstructures[[2]]};
+		(*allstructures=
+			MapAt[FromMatrixToSpinorsAngle[#,labels]&/@#&,#,{1}]&@allstructures;
+		allstructures=
+			MapAt[FromMatrixToSpinorsSquare[#,labels]&/@#&,#,{2}]&@allstructures;*)
+		
+		allstructures=Tuples@allstructures;
+		schoutened=allstructures;
+		allstructures=Times@@@allstructures;
+		
+		If[
+			{linesAngles}[[-1]]!=0&&{linesSquares}[[-1]]!=0,
+			schoutened=Times@@@schoutened;
+			schoutened=
+				Expand/@
+					ReplaceRepeated[
+						schoutened,
+						Flatten@(
+							Table[
+								SpinorAngleBracket[i,#1]^a_. SpinorSquareBracket[j,#1]^b_.:>Evaluate[(Sum[-SpinorAngleBracket[i,k]SpinorSquareBracket[j,k],{k,#2}])^Min[a,b] SpinorAngleBracket[i,#1]^Max[a-b,0] SpinorSquareBracket[j,#1]^Max[b-a,0]],
+								{i,#2},{j,#2}
+							]&[labels[[-1]],Drop[labels,-1]]
+						)
+					];
+			Return[Transpose[{allstructures,schoutened}]]
+		];
+		
+		Set@@@
+			(MapAt[Simp,#,{1}]&/@
+				Join[
+				SchoutenIdentities[{linesAngles},labels,"Bracket"->"Angle"],
+				SchoutenIdentities[{linesSquares},labels,"Bracket"->"Square"]
+			]);
+		
+		schoutened=Times@@@Map[Simp,schoutened,{2}];
+		schoutened=Expand/@schoutened; (*very slow step*)
+		
+		(*Set@@@Transpose[{Simp/@allstructures,schoutened}];*)(*this step is not needed because after momentum conservation the
+		resulting structures are not those given by {{linesAngles,linesSquares}}*)
+		
+		If[
+			{linesAngles}[[-2]]!=0&&{linesSquares}[[-2]]!=0,
+			If[
+				{linesSquares}[[-1]]!=0,
+				schoutened=
+					Expand/@
+						ReplaceRepeated[
+							schoutened,
+							Table[
+								SpinorAngleBracket[i,#1]^\[Alpha]_. SpinorSquareBracket[#1,#2]^\[Beta]_.:>Evaluate[Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[j,#2],{j,#3}]^Min[\[Alpha],\[Beta]]*SpinorAngleBracket[i,#1]^Max[\[Alpha]-\[Beta],0] SpinorSquareBracket[#1,#2]^Max[\[Beta]-\[Alpha],0]],
+								{i,#3}
+							]&[labels[[-2]],labels[[-1]],Drop[labels,-2]]
+						]
 			];
-		squares=
-			DeleteCases[
-				Table[{i,SquareCount[exp,i]},{i,length}],
-				_?(#[[2]]==0&)
+			If[
+				{linesAngles}[[-1]]!=0,
+				schoutened=
+					Expand/@
+						ReplaceRepeated[
+							schoutened,
+							Table[
+								SpinorSquareBracket[i,#1]^a_. SpinorAngleBracket[#1,#2]^b_.:>Evaluate[Sum[-SpinorSquareBracket[i,j]SpinorAngleBracket[j,#2],{j,#3}]^Min[a,b]*SpinorSquareBracket[i,#1]^Max[a-b,0] SpinorAngleBracket[#1,#2]^Max[b-a,0]],
+								{i,#3}
+							]&[labels[[-2]],labels[[-1]],Drop[labels,-2]]
+						]
 			];
-		Return[List[angles,squares]];
+			If[
+				{linesAngles}[[1]]!=0&&{linesSquares}[[1]]!=0,
+				schoutened=
+					ReplaceAll[
+						schoutened,
+						SpinorAngleBracket[#1,#2]^a_. SpinorSquareBracket[#1,#2]^b_.:>Evaluate[(1/2*Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[i,j],{i,#3},{j,#3}]-Sum[SpinorAngleBracket[#1,j]SpinorSquareBracket[#1,j],{j,#3}])^Min[a,b] SpinorAngleBracket[#1,#2]^Max[a-b,0] SpinorSquareBracket[#1,#2]^Max[b-a,0]]
+					]&[labels[[1]],labels[[-2]],Drop[RotateLeft[labels],-3]]
+			]
+		];
+		
+		If[
+			{linesAngles}[[1]]!=0&&{linesSquares}[[1]]!=0&&({linesAngles}[[-1]]!=0||{linesSquares}[[-1]]!=0),
+			If[
+				{linesAngles}[[-1]]==0,
+				schoutened=
+					ReplaceAll[
+						schoutened,
+						SpinorAngleBracket[#1,#2]^a_.*SpinorSquareBracket[#1,#3]^b_.:>Evaluate[Sum[-SpinorAngleBracket[j,#2]*SpinorSquareBracket[j,#3],{j,#4}]^Min[a,b] SpinorAngleBracket[#1,#2]^Max[a-b,0]*SpinorSquareBracket[#1,#3]^Max[b-a,0]]
+					]&[labels[[1]],labels[[-2]],labels[[-1]],Drop[RotateLeft[labels],-3]],
+				schoutened=
+					ReplaceAll[
+						schoutened,
+						SpinorSquareBracket[#1,#2]^a_.*SpinorAngleBracket[#1,#3]^b_.:>Evaluate[Sum[-SpinorSquareBracket[j,#2]*SpinorAngleBracket[j,#3],{j,#4}]^Min[a,b] SpinorSquareBracket[#1,#2]^Max[a-b,0]*SpinorAngleBracket[#1,#3]^Max[b-a,0]]
+					]&[labels[[1]],labels[[-2]],labels[[-1]],Drop[RotateLeft[labels],-3]]
+			]
+		];
+		
+		Return[Transpose[{allstructures,Expand/@schoutened}]]
 	]
 
 
 (* ::Subsubsection::Closed:: *)
-(*Schouten for angles and squares*)
+(*All Identities*)
 
 
-Options[AngleSquareSchouten]={"Substitutions"->True}
+AllIdentities[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]]]&)]:=
+	Block[{labels=Part[#,1]&/@{list},angles,squares,structures},
 
-AngleSquareSchouten[count_List,OptionsPattern[]]:=
-	Module[{schouten},
-		schouten=Flatten/@Transpose[Map[SchoutenIdentities[#,"Substitutions"->OptionValue["Substitutions"]]&,count,{2}]];
-		schouten[[1]]=schouten[[1]]/.{Bracket->SpinorAngleBracket};
-		schouten[[2]]=schouten[[2]]/.{Bracket->SpinorSquareBracket};
-		schouten=Flatten[schouten];
-		Return[schouten];
+		{angles,squares}={Abs[#]-#,Abs[#]+#}&@(Part[#,2]&/@{list});
+
+		structures=Append[#,0]&/@PermutationsOfPartitions[dim-Total[angles]/2-Total[squares]/2,Length[angles]-1];
+
+		structures={angles+#,squares+#}&/@structures;
+
+		structures=If[Length[#]<2,Nothing,#]&/@Map[IsLoopLessDoable,structures,{2}];
+
+		structures=
+			Map[AllGraphs,structures,{2}]
 	]
+
+
+(* ::Subsection:: *)
+(*Momentum Con*)
 
 
 End[]
