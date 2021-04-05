@@ -289,8 +289,8 @@ PlanarMomentumConservation[{angles_,squares_}]:=
 HelicityStructures[{anglestructure_List,squarestructure_List}]:=
 	Module[{formfactors,angles,squares},
 
-		angles=AllNonIntersectionGraphs[Part[#,2]&/@anglestructure];
-		squares=AllNonIntersectionGraphs[Part[#,2]&/@squarestructure];
+		angles=AllNonIntersectingGraphs[Part[#,2]&/@anglestructure];
+		squares=AllNonIntersectingGraphs[Part[#,2]&/@squarestructure];
 
 		formfactors=Tuples[{angles,squares}];
 		
@@ -318,18 +318,14 @@ IndependentFormFactors[d_Integer,OptionsPattern[]]:=
 
 		If[
 			OptionValue["MatterContent"],
-			structures=Tuples/@Thread[{List/@List/@Flatten/@AmplitudesScalars[d],structures}]
-		];
-
-		structures=Flatten[structures,1];
-		
-		If[
-			OptionValue["MatterContent"],
-			structures=Flatten[#,1]&@(Tuples/@(MapAt[HelicityStructures,#,2]&/@structures)),
+			
+			structures=Thread[{(*List/@*)Flatten/@AmplitudesScalars[d],structures}];
+			structures=MapAt[HelicityStructures,#,{2,All}]&/@structures;
+			structures=(*Tuples@*)(MapAt[Flatten,#,2]&/@structures),
+			
+			structures=Flatten[structures,1];
 			structures=Flatten[HelicityStructures[#]&/@structures]
-		];	
-
-		Return[structures]
+		]
 	]
 
 
@@ -362,7 +358,7 @@ IndependentHelicityFactors[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]
 (*Schouten Identities*)
 
 
-Options[SchoutenIdentities]={"Bracket"->"Angle"}
+Options[SchoutenIdentities]={"Bracket"->"Null"}
 
 SchoutenIdentities[{lines__Integer},labels_List,OptionsPattern[]]:=
 	Block[{intersecting,numberinter,nonintersecting,numbernoninter,replacements,graphlabels,x,y},
@@ -389,7 +385,7 @@ SchoutenIdentities[{lines__Integer},labels_List,OptionsPattern[]]:=
 
 		replacements=
 			Table[
-				x[i]->Total[SchoutenCrossing[intersecting[[i]]]/.(Rule@@@graphlabels)],
+				x[i]->If[OptionValue["Bracket"]==="Null",#,Total[#]]&@(SchoutenCrossing[intersecting[[i]]]/.(Rule@@@graphlabels)),
 				{i,1,numberinter}
 			];
 			
@@ -398,9 +394,7 @@ SchoutenIdentities[{lines__Integer},labels_List,OptionsPattern[]]:=
 			graphlabels=MapAt[FromMatrixToSpinorsAngle[#,labels]&,#,{1}]&/@graphlabels,
 			If[
 				OptionValue["Bracket"]==="Square",
-				graphlabels=MapAt[FromMatrixToSpinorsSquare[#,labels]&,#,{1}]&/@graphlabels,
-				Message[SchoutenIdentities::opts];
-				Return[Null]
+				graphlabels=MapAt[FromMatrixToSpinorsSquare[#,labels]&,#,{1}]&/@graphlabels
 			]
 		];
 		
@@ -421,8 +415,6 @@ SchoutenIdentities[{lines__Integer},labels_List,OptionsPattern[]]:=
 		Return[replacements];
 
 ]
-
-SchoutenIdentities::opts="Bracket option must be either Angle or Square"
 
 
 (* ::Subsubsection::Closed:: *)
@@ -445,7 +437,7 @@ SingleStructureIdentities[{{linesAngles__Integer},{linesSquares__Integer}},label
 		schoutened=allstructures;
 		allstructures=Times@@@allstructures;
 		
-		If[
+		(*If[
 			{linesAngles}[[-1]]!=0&&{linesSquares}[[-1]]!=0,
 			schoutened=Times@@@schoutened;
 			schoutened=
@@ -460,7 +452,7 @@ SingleStructureIdentities[{{linesAngles__Integer},{linesSquares__Integer}},label
 						)
 					];
 			Return[Transpose[{allstructures,schoutened}]]
-		];
+		];*)
 		
 		Set@@@
 			(MapAt[Simp,#,{1}]&/@
@@ -506,8 +498,8 @@ SingleStructureIdentities[{{linesAngles__Integer},{linesSquares__Integer}},label
 				schoutened=
 					ReplaceAll[
 						schoutened,
-						SpinorAngleBracket[#1,#2]^a_. SpinorSquareBracket[#1,#2]^b_.:>Evaluate[(1/2*Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[i,j],{i,#3},{j,#3}]-Sum[SpinorAngleBracket[#1,j]SpinorSquareBracket[#1,j],{j,#3}])^Min[a,b] SpinorAngleBracket[#1,#2]^Max[a-b,0] SpinorSquareBracket[#1,#2]^Max[b-a,0]]
-					]&[labels[[1]],labels[[-2]],Drop[RotateLeft[labels],-3]]
+						SpinorAngleBracket[#1,#2]^a_. SpinorSquareBracket[#1,#2]^b_.:>Evaluate[(1/2*Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[i,j],{i,#3},{j,#3}]-Sum[SpinorAngleBracket[#1,j]SpinorSquareBracket[#1,j],{j,Drop[#3,-1]}])^Min[a,b] SpinorAngleBracket[#1,#2]^Max[a-b,0] SpinorSquareBracket[#1,#2]^Max[b-a,0]]
+					]&[labels[[1]],labels[[-2]],Drop[RotateLeft[labels],-2]]
 			]
 		];
 		
@@ -536,8 +528,12 @@ SingleStructureIdentities[{{linesAngles__Integer},{linesSquares__Integer}},label
 (*All Identities*)
 
 
+(* ::Text:: *)
+(*TODO: regardless of the order in which the labels are given, we should make  them ordered*)
+
+
 AllIdentities[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]]]&)]:=
-	Block[{labels=Part[#,1]&/@{list},angles,squares,structures},
+	Block[{labels=Part[#,1]&/@{list},angles,squares,structures,Simp},
 
 		{angles,squares}={Abs[#]-#,Abs[#]+#}&@(Part[#,2]&/@{list});
 
@@ -547,13 +543,18 @@ AllIdentities[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]]]&)]:=
 
 		structures=If[Length[#]<2,Nothing,#]&/@Map[IsLoopLessDoable,structures,{2}];
 
-		structures=
-			Map[AllGraphs,structures,{2}]
+		structures=SingleStructureIdentities[#,labels]&/@structures;
+		
+		structures=Join@@structures;
+		
+		Simp[x_Plus]:=Plus@@(Simp/@List@@x);
+		Simp[Times[N_*a___]]/;NumberQ[N]:=Expand[N*Simp[Times[a]]];
+		
+		Set@@@(MapAt[Simp,#,1]&/@structures);
+		
+		structures=MapAt[Simp,#,2]&/@structures (*this step could be very slow, it could be interesting to see if
+		mapping twice Simp in the expression to simplify could be faster, skipping the 'Simp' part of this function*)
 	]
-
-
-(* ::Subsection:: *)
-(*Momentum Con*)
 
 
 End[]

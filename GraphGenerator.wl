@@ -19,6 +19,7 @@ IsLoopLessDoable::usage = "..."
 AllGraphs::usage = "..."
 ComputedGraphs::usage = "..."
 
+IsGraphNonIntesercting::usage = "..."
 AllNonIntersectingGraphs::usage = "..."
 ComputedNonIntersectingGraphs::usage = "..."
 
@@ -201,7 +202,7 @@ IsGraphNonIntesercting[adjacencymatrix_?(MatrixQ[#]&),OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*All the Non-Intersecting Graphs*)
 
 
@@ -212,7 +213,7 @@ AllNonIntersectingGraphs[lines_List]:=
 		ComputedNonIntersectingGraphs[lines]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Schouten = loosen crossings*)
 
 
@@ -248,7 +249,7 @@ SchoutenCrossing[adjacencymatrix_?MatrixQ]:=
 			matrix2[[positions[[1]],positions[[4]]]]++;
 			matrix2[[positions[[2]],positions[[3]]]]++;
 			
-			Return[If[Head[#]===SparseArray,SparseArray@#,#]&/@{matrix1,matrix2}],
+			Return[If[ListQ[adjacencymatrix],#,SparseArray/@#]&@{matrix1,matrix2}],
 			
 			Return[adjacencymatrix]
 		];

@@ -37,10 +37,21 @@ Begin["`Private`"]
 		]
 	]*)
 	
-ReLabel[x_Plus,tobe_,new_]:=Plus@@(ReLabel[#,tobe,new]&/@(List@@x))
-ReLabel[x_Times,tobe_,new_]:=Times@@(ReLabel[#,tobe,new]&/@(List@@x))
+ReLabel[x_Plus,tobe_List,new_List]:=Plus@@(ReLabel[#,tobe,new]&/@(List@@x))
+ReLabel[x_Times,tobe_List,new_List]:=Times@@(ReLabel[#,tobe,new]&/@(List@@x))
 
-ReLabel[exp_,toberelabelled_,newlabels_]:=
+ReLabel[exp_Power,tobe_List,new_List]:=MapAt[ReLabel[#,tobe,new]&,exp,1]
+ReLabel[exp_,tobe_List,new_List]/;NumberQ[exp]:=exp
+ReLabel[exp_,toberelabelled_List,newlabels_List]:=
+	Block[{Simp},
+		
+		Set@@@Thread[{Simp/@toberelabelled,newlabels}];
+		Simp[x_]:=x;
+		
+		Map[Simp,exp,Infinity]
+	]
+
+(*ReLabel[exp_,toberelabelled_,newlabels_]:=
 	Module[{localexp=exp,power=1},
 	
 		If[NumberQ[localexp],Return[localexp]];
@@ -50,7 +61,7 @@ ReLabel[exp_,toberelabelled_,newlabels_]:=
 		localexp=ReplaceAll[localexp,Thread[Flatten[toberelabelled]->Flatten[newlabels]]];
 		
 		Return[Power[localexp,power]];
-	]
+	]*)
 
 
 (* ::Subsection:: *)
@@ -58,6 +69,8 @@ ReLabel[exp_,toberelabelled_,newlabels_]:=
 
 
 Options[Symmetrise]={"AntiSymmetric"->False(*,"NumericalCoefficients"\[Rule]True*)}; (*The NumericalCoefficients options is necessary when the label to permute are numbers. Wrong replacement could appear while working with numbers. At the present stage of the function ReLabel this should not be the case anymore, so the option NumericalCoefficients is commented.*)
+
+Symmetrise[exp_,tobesymmetrised_?(Length[#]==1&),OptionsPattern[]]:=exp
 
 Symmetrise[exp_,tobesymmetrised_List,OptionsPattern[]]:=
 	Module[{length=(Length[tobesymmetrised])!,permutations,signs,symmetrisation(*,coefficient*)},
@@ -99,8 +112,8 @@ MultipleSymmetrise[exp_,tobesymmetrised__List,OptionsPattern[]]:=
 	Module[{localexp=exp,localsymm={tobesymmetrised},coefficient},
 
 		Do[
-			localexp=Symmetrise[localexp,localsymm[[i]],"AntiSymmetric"->OptionValue["AntiSymmetric"](*,"NumericalCoefficients"\[Rule]False*)],
-			{i,1,Length[localsymm]}
+			localexp=Symmetrise[localexp,i,"AntiSymmetric"->OptionValue["AntiSymmetric"](*,"NumericalCoefficients"\[Rule]False*)],
+			{i,localsymm}
 		];
 
 		(*If[

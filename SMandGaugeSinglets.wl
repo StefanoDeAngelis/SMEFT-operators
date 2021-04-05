@@ -32,11 +32,6 @@ eBar::usage = "..."
 HH::usage = "..."
 HBar::usage = "..."
 
-adj::usage = "The adjoint representation of both the SU(2) and SU(3) gauge groups"
-sing::usage = "The singlet representation for both the SU(2) and SU(3) gauge groups"
-fund::usage = "The fundamental representation for the SU(3) gauge group"
-afund::usage = "The antifundamental representation for the SU(3) gauge group"
-
 GluonsM::usage = "All the vectors with plus helicity"
 GluonsP::usage = "All the vectors with minus helicity"
 FermionsM::usage = "All the fermions with plus helicity"
@@ -44,15 +39,14 @@ FermionsP::usage = "All the fermions with minus helicity"
 Scalars::usage = "All the scalars"
 Fields::usage = "All the fields of the Standard Model"
 
-ColourSingletDoable::usage = "Given a list of particles of the Standard Model, the function gives the list back if it possible to form a colour singlet."
+FermionQ::usage = ".."
+BosonQ::usage = ".."
+
 CombinationsOfFields::usage = "..."
 
-SU3singlet::usage = "..."
-SU2singlet::usage = "..."
 GaugeSinglets::usage = "..."
 
 FinalAmplitude::usage = "..."
-MomentumConservationReplacements::usage = "..."
 IdentitiesBetweenAmplitudes::usage = "..."
 
 AllOperators::usage = "..."
@@ -89,6 +83,12 @@ FermionsP={QQ,uu,dd,LL,ee}
 FermionsM={QBar,uBar,dBar,LBar,eBar}
 Scalars={HH,HBar}
 Fields={GluonsM,GluonsP,FermionsM,FermionsP,Scalars};
+
+Fermions=Join[FermionsP,FermionsM];
+Bosons=Join[GluonsM,GluonsP,Scalars];
+
+FermionQ[x_]:=MemberQ[Fermions,x]
+BosonQ[x_]:=MemberQ[Bosons,x]
 
 
 (* ::Subsection::Closed:: *)
@@ -222,18 +222,27 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 							SU3singlet[singlets[[1]]]
 						])
 			];
-		(*adjointSU2=Flatten[Position[singlets[[2]],adj]];*)
 		singlets[[2]]=InvariantsSU2[SU2singlet[singlets[[2]]],"Dummies"->Length[fields]];
-			(*SimplifyInvariants[
-				ContractSU2[#,Length[fields]+1]&/@
-					(Product[TauSU2[ILabel[i]][xLabel[i,120],xLabel[i,121]],{i,adjointSU2}]
-						FromStructuresToEpsilonSU2[
-							SU2singlet[singlets[[2]]]
-						])
-			];*)
 		singlets=Map[(Times@@#)&,Tuples[singlets],{1}];
 		Return[singlets];
 	]
+
+
+(* ::Subsection::Closed:: *)
+(*IdenticalParticles*)
+
+
+IdenticalParticles[fields_List]:=
+	If[FermionQ[fields[[1]]],{#[[2]],#[[1]]},#]&@
+		(
+		If[Length[#]===1,Append[#,{{}}],#]&@
+			GatherBy[
+				GatherBy[Range@Length[fields],fields[[#]]&],
+				BosonQ[
+					fields[[#[[1]]]]
+				]&
+			]
+		)
 
 
 (* ::Subsection::Closed:: *)
@@ -242,74 +251,72 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 
 Options[FinalAmplitude]={"RenormalisableTree"->False}
 
-FinalAmplitude[{fields_List,helicity_},OptionsPattern[]]:=
+FinalAmplitude[{fields_List,helicity_List},OptionsPattern[]]:=
 	Module[{colourfactors=GaugeSinglets[fields,"RenormalisableTree"->OptionValue["RenormalisableTree"]],amplitudes},
+		
 		If[colourfactors==Null,Return[Nothing]];
-		amplitudes=Thread[Times[colourfactors,helicity]];
+		
+		amplitudes=Times@@@Tuples[{colourfactors,helicity}];
+		
 		If[\[Not]DuplicateFreeQ[fields],
-			Module[{bosons={{}},fermions={{}},localfields=DeleteDuplicates[fields],localamplitudes=amplitudes,number,positions},
-				number=Length[localfields];
-				Do[
-					positions=Flatten[Position[fields,localfields[[i]]]];
-					If[
-						Length[positions]>1,
-						If[MemberQ[Join[GluonsM,GluonsP,Scalars],localfields[[i]]],AppendTo[bosons,positions]];
-						If[MemberQ[Join[FermionsM,FermionsP],localfields[[i]]],AppendTo[fermions,positions]]
-					],
-					{i,1,number}
-				];
-				localamplitudes=MultipleSymmetrise[#,Sequence@@bosons]&/@localamplitudes;
-				localamplitudes=MultipleSymmetrise[#,Sequence@@fermions,"AntiSymmetric"->True]&/@localamplitudes;
-				amplitudes=DeleteCases[localamplitudes,_?PossibleZeroQ];
+			Block[{bosons,fermions},
+				{bosons,fermions}=IdenticalParticles[fields];
+				amplitudes=MultipleSymmetrise[#,Sequence@@bosons]&/@amplitudes;
+				amplitudes=MultipleSymmetrise[#,Sequence@@fermions,"AntiSymmetric"->True]&/@amplitudes;
+				amplitudes=DeleteCases[amplitudes,_?PossibleZeroQ];
+				amplitudes=DeleteDuplicates[amplitudes,(#1===#2||#1===-#2)&];
 			];
 		];
-		amplitudes=Table[{fields,amplitudes[[i]]},{i,1,Length[amplitudes]}];
-		Return[amplitudes]
-	]
-
-
-(* ::Subsection::Closed:: *)
-(*Momentum conservation replacements*)
-
-
-MomentumConservationReplacements[length_Integer]:=
-	Join[
-		Flatten@Table[SpinorAngleBracket[i,length]^a_. SpinorSquareBracket[j,length]^b_.:>Evaluate[(Sum[-SpinorAngleBracket[i,k]SpinorSquareBracket[j,k],{k,1,length-1}])^Min[a,b] SpinorAngleBracket[i,length]^Max[a-b,0] SpinorSquareBracket[j,length]^Max[b-a,0]],{i,1,length-1},{j,1,length-1}],
-		Table[SpinorAngleBracket[i,length-1]^a_. SpinorSquareBracket[length-1,length]^b_.:>Evaluate[Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[j,length],{j,1,length-2}]^Min[a,b]*SpinorAngleBracket[i,length-1]^Max[a-b,0] SpinorSquareBracket[length-1,length]^Max[b-a,0]],{i,1,length-2}],
-		Table[SpinorSquareBracket[i,length-1]^a_. SpinorAngleBracket[length-1,length]^b_.:>Evaluate[Sum[-SpinorSquareBracket[i,j]SpinorAngleBracket[j,length],{j,1,length-2}]^Min[a,b]*SpinorSquareBracket[i,length-1]^Max[a-b,0] SpinorAngleBracket[length-1,length]^Max[b-a,0]],{i,1,length-2}],
-		List[
-			SpinorAngleBracket[1,length-1]^a_.*SpinorSquareBracket[1,length]^b_.:>Evaluate[Sum[-SpinorAngleBracket[j,length-1]*SpinorSquareBracket[j,length],{j,2,length-2}]^Min[a,b] SpinorAngleBracket[1,length-1]^Max[a-b,0]*SpinorSquareBracket[1,length]^Max[b-a,0]],
-			SpinorSquareBracket[1,length-1]^a_.*SpinorAngleBracket[1,length]^b_.:>Evaluate[Sum[-SpinorSquareBracket[j,length-1]*SpinorAngleBracket[j,length],{j,2,length-2}]^Min[a,b] SpinorSquareBracket[1,length-1]^Max[a-b,0]*SpinorAngleBracket[1,length]^Max[b-a,0]],
-			SpinorAngleBracket[1,length-1]^a_. SpinorSquareBracket[1,length-1]^b_.:>Evaluate[(Sum[-SpinorAngleBracket[i,j]SpinorSquareBracket[i,j],{i,2,length-1},{j,i+1,length-1}]-Sum[SpinorAngleBracket[1,j]SpinorSquareBracket[1,j],{j,2,length-2}])^Min[a,b] SpinorAngleBracket[1,length-1]^Max[a-b,0] SpinorSquareBracket[1,length-1]^Max[b-a,0]]
+		
+		If[
+			MatchQ[amplitudes,{}],
+			Return[Nothing],
+			Return[{fields,amplitudes}]
 		]
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Identities Between Amplitudes*)
 
 
 (* ::Text:: *)
 (*The SU(3) are not implemented yet! TODO!!!*)
-(*This function has also to take into account the additional momentum conservation identities! TODO!!!*)
+(*TODO: avoid the Simp auxilliary function + solve the problems between Coms/Simp and SpinorAngleBracket/SpinorSquareBracket*)
+(*TODO: the Simplify has to be removed if we want to go beyond dimension 8 (setting the first addend equal to minus the rest for each (local)operator recursively.*)
 
 
-IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
-	Module[{singlets,num=Length[fields],localoperators,count,ids,independent={operators[[1]]}},
-		ids=MomentumConservationReplacements[num];
-		localoperators=
-			FixedPoint[
-				Expand[ReplaceRepeated[#,ids]]&,
-				operators
-			];
-		count=AngleSquareCount[#,num]&/@localoperators;
-		count=AngleSquareSchouten[DeleteDuplicates[count]];
-		ids=Join[ids,count];
-		localoperators=
-			FixedPoint[
-				Expand[ReplaceRepeated[#,ids]]&,
-				operators
-			];
+(*PossibleRedundancyQ[{fields_List,ops_List}]:=(\[Not]DuplicateFreeQ[fields])*)
+
+HelicityConfigurations[species_List]:=Thread[{Range[Total@species],Flatten@MapThread[ConstantArray,{{-1,1,-1/2,1/2,0},species}]}]
+
+DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
+	Block[{singlets,num=Length[fields],localoperators=operators,independent={}},
+		
+		If[
+			momenta>0&&fields[[-2]]===fields[[-1]],
+			Block[{Cons},
+
+				Cons[x_Plus]:=Plus@@(Cons/@List@@x);
+				Cons[x_*a__]/;MatchQ[Head[x],EpsilonSU2|TauSU2|StructureConstantSU2|DeltaSU2|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x*Cons[Times[a]];
+				Cons[x_]:=
+						ReplaceRepeated[
+							x,
+							Flatten@(
+								Table[
+									SpinorAngleBracket[i,num]^a_. SpinorSquareBracket[j,num]^b_.:>Evaluate[(Sum[-SpinorAngleBracket[i,k]SpinorSquareBracket[j,k],{k,num-1}])^Min[a,b] SpinorAngleBracket[i,num]^Max[a-b,0] SpinorSquareBracket[j,num]^Max[b-a,0]],
+									{i,num-1},{j,num-1}
+								]
+							)
+						];
+
+				localoperators=Expand/@Cons/@localoperators
+			]
+		];
+
+		localoperators=Expand/@Simp/@localoperators;(*can this step be avoided?
+		We could assign a value to certain combinations of brackets.*)
+
 		singlets=
 			Drop[
 				Transpose[
@@ -324,20 +331,45 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 				Expand[ReplaceRepeated[#,singlets]]&,
 				localoperators
 			];
-		localoperators=DeleteCases[localoperators,0];
-		If[localoperators==={},Return[Nothing]];
+
+		If[DeleteCases[localoperators,0]==={},Return[Nothing]];
 		Do[
 			If[
 				\[Not]MatchQ[
-					Simplify[localoperators[[i]],Table[localoperators[[j]]==0,{j,1,i-1}]],
+					Simplify[localoperators[[i]],Table[localoperators[[j]]==0,{j,i-1}]],
 					0
 				],
 				AppendTo[independent,operators[[i]]];
 			],
-			{i,2,Length[localoperators]}
+			{i,1,Length[localoperators]}(*the first one could be skipped if we check that it is not zero, this speed the computation up of about 1 minute*)
 		];
-		Return[{{fields},independent}];
+		
+		Return[{fields,independent}];
 	]
+	
+IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
+	(*If[Or@@#,*)
+		Block[{Simp,localOps=fieldEops},
+
+			Set@@@
+				MapAt[
+					Simp,
+					AllIdentities[d-Total[#]][Sequence@@HelicityConfigurations[#]]&@species,
+					{All,1}
+				];
+			Simp[x_Plus]:=Plus@@(Simp/@List@@x);
+			Simp[x_*a__]/;MatchQ[Head[x],EpsilonSU2|TauSU2|StructureConstantSU2|DeltaSU2|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x*Simp[Times[a]];
+			(*probably the Simp could be avoided just by assigning the substitutions to the combination of brackets.
+			In order to do this, we have to make SpinorAngleBracket and SpinorSquareBracket local variables in block.
+			Once we do this, the angles and the squares should behave correctly in MatchQ*)
+
+			(*localOps=MapAt[DeleteRedundant[#,d-Total@(species*{2,2,3/2,3/2,1})]&,localOps,Position[#,True]]*)
+			localOps=DeleteRedundant[#,d-Total@(species*{2,2,3/2,3/2,1})]&/@localOps;
+			
+			Return[(*{species,*)localOps(*}*)]
+		](*,
+		Return[(*{species,*)fieldEops(*}*)]
+	]&@(PossibleRedundancyQ/@fieldEops)*)(*we need to check all because the SU(3) invariants are generated all, not just an independent subset*)
 
 
 (* ::Subsection::Closed:: *)
@@ -345,23 +377,19 @@ IdentitiesBetweenAmplitudes[{{fields_},operators_}]:=
 
 
 AllOperators[d_]:=
-	Module[{matter,helicityfactor,ops},
-		{matter,helicityfactor}=Transpose[(*IndependentHelicityFactors[d]*)(*TestMomentumConservation[d]*)IndependentStructures[d]];
-		matter=CombinationsOfFields/@matter;
-		ops=
-			Flatten[
-				Thread/@
-					(If[MatchQ[#[[1]],{}],Nothing,#]&/@Transpose[List[matter,helicityfactor]]),
-				1
-			];
-		ops=Flatten[FinalAmplitude/@ops,1];
-		ops=Map[DeleteDuplicates,Transpose/@GatherBy[ops,First],{2}];
-		ops=
-			Flatten[
-				Tuples/@(IdentitiesBetweenAmplitudes/@ops),
-				1
-			];
-		Return[ops];
+	Block[{ops},
+	
+		ops=Transpose[IndependentFormFactors[d]];
+		
+		ops[[1]]=Thread[{ops[[1]],CombinationsOfFields/@ops[[1]]}]; (*ops[[1]] are the matter contents, ops[[2]] are the spinor helicity factors*)
+		
+		ops=Transpose[ops];
+		
+		ops=If[MatchQ[#[[1,2]],{}],Nothing,{#[[1,1]],Tuples[{#[[1,2]],{#[[2]]}}]}]&/@ops;
+		
+		ops=MapAt[FinalAmplitude/@#&,#,2]&/@ops;
+		
+		ops=IdentitiesBetweenAmplitudes[d][#]&/@ops
 	]
 
 
@@ -372,49 +400,6 @@ End[]
 (*Attributes*)
 
 
-SetAttributes[
-    {
-	TransformationRules,
-	OrderingRule,
-	GGp,
-	WWp,
-	BBp,
-	GGm,
-	WWm,
-	BBm,
-	QQ,
-	uu,
-	dd,
-	LL,
-	ee,
-	QBar,
-	uBar,
-	dBar,
-	LBar,
-	eBar,
-	HH,
-	HBar,
-	adj,
-	sing,
-	fund,
-	afund,
-	GluonsM,
-	GluonsP,
-	FermionsM,
-	FermionsP,
-	Scalars,
-	Fields,
-	ColourSingletDoable,
-	CombinationsOfFields,
-	SU3singlet,
-	SU2singlet,
-	GaugeSinglets,
-	FinalAmplitude,
-	MomentumConservationReplacements,
-	IdentitiesBetweenAmplitudes,
-	AllOperators
-	},
-    Protected
-]
+Protect@@Names["SMandGaugeSinglets`*"]
 
 EndPackage[]

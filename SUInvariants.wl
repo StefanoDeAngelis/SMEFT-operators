@@ -352,7 +352,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 (*Todo!!! For the SU(2) group it is enough a function which transforms a double epsilon into a combination of deltas. Otherwise the duplicates can be isolated using the Complement function for the two lists of three indices. For now this is implemented in ContractSU2*)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Generation of independent invariant tensors*)
 
 
@@ -403,9 +403,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 
 		numberfundlabels=Count[lines,1];
 
-		admatrices=Map[PadLeft[#,numberpoints]&,Append[#,{}]&/@AllGraphs[lines],{2}];
-		
-		admatrices=IsGraphNonIntesercting/@admatrices;
+		admatrices=Normal/@AllNonIntersectingGraphs[lines];
 		
 		structures=FromMatricesToEpsilons[#,labels,numberpoints,numberfundlabels]&/@admatrices;
 		
@@ -413,7 +411,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From the representation structure to the (independent&simplified) invariant tensors*)
 
 
@@ -438,7 +436,7 @@ InvariantsSU2[pointslines_List,OptionsPattern[]]:=
 (*TODO: implement the contraction in the functions above.*)*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Generation of the su(2) linear relations*)
 
 
@@ -458,7 +456,7 @@ LinearRelationsSU2[pointslines_List,OptionsPattern[]]:=
 		labelsadj=Table[labels[[i]],{i,numberfundlabels+1,numberpoints}];
 		biggestlabel=Max[labels];
 
-		intersecting=Map[PadLeft[#,numberpoints]&,Append[#,{}]&/@AllGraphs[lines],{2}]; (*generate all graphs*)
+		intersecting=Normal/@AllGraphs[lines]; (*generate all graphs*)
 
 		nonintersecting=IsGraphNonIntesercting/@intersecting; (*generate non-intersecting graphs*)
 		numbernoninter=Length[nonintersecting];
@@ -514,7 +512,7 @@ LinearRelationsSU2[pointslines_List,OptionsPattern[]]:=
 ]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*All Invariants of su(2) appearing in the linear relations*)
 
 
@@ -699,7 +697,7 @@ TensorDBoxSU3[A_, B_,C_] :=
 TensorDSU3/: MakeBoxes[TensorDSU3[A_, B_,C_], StandardForm | TraditionalForm] := TensorDBoxSU3[ToBoxes[A], ToBoxes[B],ToBoxes[C]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Symmetry properties of the building blocks*)
 
 
@@ -988,7 +986,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*All invariant (representation with deltas)*)
 
 
@@ -1028,8 +1026,8 @@ SimplifyInvariants[list_List]:=
 	]
 
 
-(* ::Subsection:: *)
-(*Relations between the SU(3) invariants up to dimension 9 SMEFT operators (up to dimension 9 for the moment)*)
+(* ::Subsection::Closed:: *)
+(*Relations between the SU(3) invariants up to dimension 8 SMEFT operators (up to dimension 9 for the moment)*)
 
 
 AllIdentitiesSU3[labelsrepresentations_List]:=
