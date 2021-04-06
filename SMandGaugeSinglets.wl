@@ -39,6 +39,11 @@ FermionsP::usage = "All the fermions with minus helicity"
 Scalars::usage = "All the scalars"
 Fields::usage = "All the fields of the Standard Model"
 
+adj::usage = "..."
+sing::usage = "..."
+fund::usage = "..."
+afund::usage = "..."
+
 FermionQ::usage = ".."
 BosonQ::usage = ".."
 
