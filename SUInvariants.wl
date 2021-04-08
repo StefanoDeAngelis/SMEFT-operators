@@ -619,7 +619,7 @@ TauBoxSU3[A__,a_, b_] :=
 TauSU3 /: MakeBoxes[TauSU3[A__,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[Sequence@@(ToBoxes/@{A}),ToBoxes[a], ToBoxes[b]];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Delta*)
 
 
@@ -647,14 +647,14 @@ EpsilonAFundBoxSU3[a_,b_,c_]:=
 EpsilonAFundSU3 /: MakeBoxes[EpsilonAFundSU3[a_, b_,c_], StandardForm | TraditionalForm] := EpsilonAFundBoxSU3[ToBoxes[a], ToBoxes[b],ToBoxes[c]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Delta (adjoint)*)
 
 
 DeltaAdjBoxSU3[A_, B_] :=
     TemplateBox[{A, B}, "DeltaAdjSU3",
         DisplayFunction -> (SuperscriptBox["\[Delta]",RowBox[{#1,#2}]]&),
-        InterpretationFunction -> (RowBox[{"DeltaAdjSU3","[",RowBox[{#1 ",",#2}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"DeltaAdjSU3","[",RowBox[{#1 ,",",#2}],"]"}]&)]
 DeltaAdjSU3 /: MakeBoxes[DeltaAdjSU3[A_, B_], StandardForm | TraditionalForm] := DeltaAdjBoxSU3[ToBoxes[A], ToBoxes[B]]
 
 
