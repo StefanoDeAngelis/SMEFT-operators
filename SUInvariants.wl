@@ -266,7 +266,7 @@ RenameDummiesSU2[exp_,n_]:=
 (*Contract indices in the fundamental*)
 
 
-ContractSU2[exp_Plus,dummylabel_]:= Plus@@(RenameDummiesSU2[#,dummylabel]&/@(List@@exp))
+ContractSU2[exp_Plus,dummylabel_]:= Plus@@(ContractSU2[#,dummylabel]&/@(List@@exp))
 
 ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[

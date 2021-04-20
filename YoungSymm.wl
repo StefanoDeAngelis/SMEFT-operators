@@ -37,6 +37,7 @@ Begin["`Private`"]
 		]
 	]*)
 	
+ReLabel[x_List,tobe_List,new_List]:=ReLabel[#,tobe,new]&/@x
 ReLabel[x_Plus,tobe_List,new_List]:=Plus@@(ReLabel[#,tobe,new]&/@(List@@x))
 ReLabel[x_Times,tobe_List,new_List]:=Times@@(ReLabel[#,tobe,new]&/@(List@@x))
 
