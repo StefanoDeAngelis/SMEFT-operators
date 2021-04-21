@@ -64,11 +64,11 @@ AllOperators::usage = "..."
 Begin["`Private`"]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Transformation rules*)
 
 
-TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm->{adj,sing,0},WWm->{sing,adj,0},BBm->{sing,sing,0},QQ->{fund,fund,1/6},uu->{afund,sing,-(2/3)},dd->{afund,sing,1/3},LL->{sing,fund,-(1/2)},ee->{sing,sing,1},QBar->{afund,fund,-(1/6)},uBar->{fund,sing,2/3},dBar->{fund,sing,-(1/3)},LBar->{sing,fund,1/2},eBar->{sing,sing,-1},HH->{sing,fund,1/2},HBar->{sing,fund,-(1/2)}}
+TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm->{adj,sing,0},WWm->{sing,adj,0},BBm->{sing,sing,0},QQ->{fund,fund,1/6},uu->{afund,sing,-(2/3)},dd->{afund,sing,1/3},LL->{sing,fund,-(1/2)},ee->{sing,sing,1},QBar->{afund,afund,-(1/6)},uBar->{fund,sing,2/3},dBar->{fund,sing,-(1/3)},LBar->{sing,afund,1/2},eBar->{sing,sing,-1},HH->{sing,fund,1/2},HBar->{sing,afund,-(1/2)}}
 
 
 (* ::Subsection::Closed:: *)
@@ -112,7 +112,7 @@ ColourSingletDoable[fields_List]:=
 		fundSU3=Count[tensorstructure[[1]],fund];
 		afundSU3=Count[tensorstructure[[1]],afund];
 		adjointSU2=Count[tensorstructure[[2]],adj];
-		fundSU2=Count[tensorstructure[[2]],fund];
+		fundSU2=Count[tensorstructure[[2]],fund|afund];
 		charge=Total[tensorstructure[[3]]];
 		If[
 			((fundSU3==0&&afundSU3==0&&adjointSU3!=1)||(Mod[fundSU3-afundSU3,3]==0&&(fundSU3!=0||afundSU3!=0)))&&((fundSU2==0&&adjointSU2!=1)||(fundSU2!=0&&EvenQ[fundSU2]))&&
@@ -189,7 +189,7 @@ SU2singlet[replist_List]:=
 				AppendTo[reps,{i,2}]
 			];
 			If[
-				replist[[i]]==fund,
+				replist[[i]]==fund||replist[[i]]==afund,
 				AppendTo[reps,{i,1}]
 			],
 			{i,1,Length[replist]}
@@ -198,7 +198,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Gauge Singlets*)
 
 
@@ -227,8 +227,9 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 							SU3singlet[singlets[[1]]]
 						])
 			];
-		singlets[[2]]=InvariantsSU2[SU2singlet[singlets[[2]]],"Dummies"->Length[fields]];
-		singlets=Map[(Times@@#)&,Tuples[singlets],{1}];
+		singlets[[2]]=Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]InvariantsSU2[SU2singlet[singlets[[2]]],"Dummies"->Length[fields]];
+		singlets[[2]]=ContractSU2[singlets[[2]],Length@fields];
+		singlets=DeleteCases[#,0]&@Map[(Times@@#)&,Tuples[singlets],{1}];
 		Return[singlets];
 	]
 
@@ -297,7 +298,7 @@ HelicityConfigurations[species_List]:=Thread[{Range[Total@species],Flatten@MapTh
 
 DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 	Block[{singlets,num=Length[fields],localoperators=operators,independent={}},
-		
+		Echo@fields;
 		If[
 			momenta>0&&fields[[-2]]===fields[[-1]],
 			Block[{Cons},
@@ -319,7 +320,7 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 			]
 		];
 
-		localoperators=Expand/@Simp/@localoperators;(*can this step be avoided?
+		localoperators=Expand/@Simp/@localoperators//Echo;(*can this step be avoided?
 		We could assign a value to certain combinations of brackets.*)
 
 		singlets=
@@ -329,13 +330,24 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 				],
 				-1
 			];
-		singlets={AllIdentitiesSU3[SU3singlet[singlets[[1]]]],SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]};
+		singlets=
+			{
+			AllIdentitiesSU3[SU3singlet[singlets[[1]]]],
+			Rule@@@(
+				If[MatchQ[#[[1,1]],-1],-#,#]&/@
+					Map[
+						ContractSU2[#,num]&,
+						Expand@(Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]List@@@SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]),
+						{2}
+					]
+				)
+			}//Echo;
 		singlets=Flatten[singlets];
 		localoperators=
 			FixedPoint[
 				Expand[ReplaceRepeated[#,singlets]]&,
 				localoperators
-			];
+			]//Echo;
 
 		If[DeleteCases[localoperators,0]==={},Return[Nothing]];
 		Do[
@@ -348,6 +360,8 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 			],
 			{i,1,Length[localoperators]}(*the first one could be skipped if we check that it is not zero, this speed the computation up of about 1 minute*)
 		];
+		
+		Echo@independent;
 		
 		Return[{fields,independent}];
 	]
@@ -363,7 +377,8 @@ IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
 					{All,1}
 				];
 			Simp[x_Plus]:=Plus@@(Simp/@List@@x);
-			Simp[x_*a__]/;MatchQ[Head[x],EpsilonSU2|TauSU2|StructureConstantSU2|DeltaSU2|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x*Simp[Times[a]];
+			Simp[x_]/;NumberQ[x]:=x;
+			Simp[x_*a__]/;MatchQ[Head[x],EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x*Simp[Times[a]];
 			(*probably the Simp could be avoided just by assigning the substitutions to the combination of brackets.
 			In order to do this, we have to make SpinorAngleBracket and SpinorSquareBracket local variables in block.
 			Once we do this, the angles and the squares should behave correctly in MatchQ*)

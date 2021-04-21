@@ -11,26 +11,19 @@ BeginPackage["SUInvariants`",{"YoungSymm`","GraphGenerator`"}]
 (*Messages*)
 
 
-iBox::usage = "..."
+jLabel::usage = "..."
 iLabel::usage = "..."
-xBox::usage = "..."
 xLabel::usage = "..."
 
-IBox::usage = "..."
 ILabel::usage = "..."
-XBox::usage = "..."
 XLabel::usage = "..."
 
-EpsilonBoxSU2::usage = "..."
 EpsilonSU2::usage = "..."
 
-TauBoxSU2::usage = "..."
 TauSU2::usage = "..."
 
-StructureBoxSU2::usage = "..."
 StructureConstantSU2::usage = "..."
 
-DeltaBoxSU2::usage = "..."
 DeltaSU2::usage = "..."
 
 RenameDummiesSU2::usage = "..."
@@ -44,37 +37,25 @@ InvariantsSU2::usage = "..."
 LinearRelationsSU2::usage = "..."
 SubstitutionsSU2::usage = "..."
 
-aBox::usage = "..."
-bBox::usage = "..."
 aLabel::usage = "..."
 bLabel::usage = "..."
 
-ABox::usage = "..."
 ALabel::usage = "..."
-CBox::usage = "..."
 CLabel::usage = "..."
 
-TauBoxSU3::usage = "..."
 TauSU3::usage = "..."
 
-DeltaBoxSU3::usage = "..."
 DeltaSU3::usage = "..."
 
-EpsilonFundBoxSU3::usage = "..."
-EpsilonAFundBoxSU3::usage = "..."
 EpsilonFundSU3::usage = "..."
 EpsilonAFundSU3::usage = "..."
 
-DeltaAdjBoxSU3::usage = "..."
 DeltaAdjSU3::usage = "..."
 
-TraceBoxSU3::usage = "..."
 TraceSU3::usage = "..."
 
-StructureBoxSU3::usage = "..."
 StructureConstantSU3::usage = "..."
 
-TensorDBoxSU3::usage = "..."
 TensorDSU3::usage = "..."
 
 (*RenameDummiesSU3::usage = "..."*)
@@ -124,6 +105,12 @@ iBox[x_]:=
 		InterpretationFunction->(RowBox[{"iLabel","[",RowBox[{#}],"]"}]&)]
 iLabel /: MakeBoxes[iLabel[x_],StandardForm|TraditionalForm] := iBox[ToBoxes[x]]
 
+jBox[x_]:=
+	TemplateBox[{x},"jLabel",
+		DisplayFunction->(SubscriptBox["j",RowBox[{#}]]&),
+		InterpretationFunction->(RowBox[{"jLabel","[",RowBox[{#}],"]"}]&)]
+jLabel /: MakeBoxes[jLabel[x_],StandardForm|TraditionalForm] := jBox[ToBoxes[x]]
+
 xBox[x_,n_]:=
 	TemplateBox[{x,n},"xLabel",
 		DisplayFunction->(SubscriptBox[#2,RowBox[{#1}]]&),
@@ -148,7 +135,7 @@ XBox[x_]:=
 XLabel /: MakeBoxes[XLabel[x_],StandardForm|TraditionalForm] := XBox[ToBoxes[x]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Epsilon*)
 
 
@@ -157,6 +144,12 @@ EpsilonBoxSU2[a_, b_] :=
         DisplayFunction -> (SuperscriptBox["\[Epsilon]",RowBox[{#1,#2}]]&),
         InterpretationFunction -> (RowBox[{"EpsilonSU2","[",RowBox[{#1,",",#2}],"]"}]&)]
 EpsilonSU2 /: MakeBoxes[EpsilonSU2[a_, b_], StandardForm | TraditionalForm] := EpsilonBoxSU2[ToBoxes[a], ToBoxes[b]]
+
+EpsilonBoxSU2[][a_, b_] :=
+    TemplateBox[{a, b}, "EpsilonSU2",
+        DisplayFunction -> (SubscriptBox["\[Epsilon]",RowBox[{#1,#2}]]&),
+        InterpretationFunction -> (RowBox[{"EpsilonSU2[]","[",RowBox[{#1,",",#2}],"]"}]&)]
+EpsilonSU2 /: MakeBoxes[EpsilonSU2[][a_, b_], StandardForm | TraditionalForm] := EpsilonBoxSU2[][ToBoxes[a], ToBoxes[b]]
 
 
 (* ::Subsubsection::Closed:: *)
@@ -185,6 +178,7 @@ TauBoxSU2[A_,a_][ b_] :=
         DisplayFunction -> (SubsuperscriptBox[SuperscriptBox["\[Sigma]",RowBox[{#1}]],RowBox[{#3}],RowBox[{#2}]]&),
         InterpretationFunction -> (RowBox[{"TauSU2","[",#1, ",",#2,"]","[",#3,"]"}]&)]
 TauSU2 /: MakeBoxes[TauSU2[A_,a_][ b_], StandardForm | TraditionalForm] := TauBoxSU2[ToBoxes[A],ToBoxes[a]][ ToBoxes[b]]
+
 TauBoxSU2[A_,a_, b_] :=
     TemplateBox[{A,a, b}, "TauSU2",
         DisplayFunction -> (SuperscriptBox["\[Sigma]",RowBox[{#1,#2,#3}]]&),
@@ -214,12 +208,14 @@ DeltaBoxSU2[A_,B_] :=
 DeltaSU2 /: MakeBoxes[DeltaSU2[A_,B_], StandardForm | TraditionalForm] := DeltaBoxSU2[ToBoxes[A],ToBoxes[B]]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Symmetry properties of building blocks*)
 
 
 EpsilonSU2[a_,b_] /;  \[Not]OrderedQ[{a,b}] := -EpsilonSU2[b,a];
 EpsilonSU2[a_,b_] /;  (a==b) := 0;
+EpsilonSU2[][a_,b_] /;  \[Not]OrderedQ[{a,b}] := -EpsilonSU2[][b,a];
+EpsilonSU2[][a_,b_] /;  (a==b) := 0;
 EpsilonSU2[a_][b_] /; (a==b) := 2;
 
 TauSU2[A_,a_,b_] /;   \[Not]OrderedQ[{a,b}] := TauSU2[A,b,a];
@@ -262,7 +258,7 @@ RenameDummiesSU2[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices in the fundamental*)
 
 
@@ -270,7 +266,7 @@ ContractSU2[exp_Plus,dummylabel_]:= Plus@@(ContractSU2[#,dummylabel]&/@(List@@ex
 
 ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
-		{localexp=exp,raiseindices={},normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=dummylabel},
+		{localexp=exp,raiseindices={},lowerindices,normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=dummylabel},
 		
 		raiseindices=
 			{
@@ -281,6 +277,17 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			
 			TauSU2[A_,a_][b_]EpsilonSU2[c_,d_]/;(b==d):>TauSU2[A,a,c],
 			TauSU2[A_,a_][b_]EpsilonSU2[c_,d_]/;(b==c):>-TauSU2[A,a,d]
+			};
+			
+		lowerindices=
+			{
+			TauSU2[A_,a_,b_]EpsilonSU2[][c_,d_]/;(b==d):>TauSU2[A,a][c],
+			TauSU2[A_,a_,b_]EpsilonSU2[][c_,d_]/;(a==d):>TauSU2[A,b][c],
+			TauSU2[A_,a_,b_]EpsilonSU2[][c_,d_]/;(b==c):>-TauSU2[A,a][d],
+			TauSU2[A_,a_,b_]EpsilonSU2[][c_,d_]/;(a==c):>-TauSU2[A,b][d],
+			
+			TauSU2[A_,a_][b_]EpsilonSU2[][c_,d_]/;(a==d):>TauSU2[A][c,b],
+			TauSU2[A_,a_][b_]EpsilonSU2[][c_,d_]/;(a==c):>-TauSU2[A][a,d]
 			};
 
 		deltafund =
@@ -296,6 +303,13 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 
 			EpsilonSU2[a_,b_]EpsilonSU2[c_][d_]/;(b==d):>EpsilonSU2[a,c],
 			EpsilonSU2[a_,b_]EpsilonSU2[c_][d_]/;(a==d):>EpsilonSU2[c,b],
+			EpsilonSU2[][a_,b_]EpsilonSU2[c_][d_]/;(b==c):>EpsilonSU2[][a,d],
+			EpsilonSU2[][a_,b_]EpsilonSU2[c_][d_]/;(a==c):>EpsilonSU2[][d,b],
+			
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(b==d):>EpsilonSU2[a][c],
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(a==c):>EpsilonSU2[b][d],
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(a==d):>-EpsilonSU2[b][c],
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(b==c):>-EpsilonSU2[a][d],
 
 			EpsilonSU2[a_][b_]EpsilonSU2[c_][d_]/;(b==c):>EpsilonSU2[a][d]
 			};
@@ -310,7 +324,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 
 		localexp=
 			FixedPoint[
-				Expand[ReplaceRepeated[#,Join[raiseindices,deltafund,decompositiongenerators]]]&,
+				Expand[ReplaceRepeated[#,Join[raiseindices,lowerindices,deltafund,decompositiongenerators]]]&,
 				localexp
 			];
 			
@@ -413,7 +427,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 ]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*From the representation structure to the (independent&simplified) invariant tensors*)
 
 
@@ -438,7 +452,7 @@ InvariantsSU2[pointslines_List,OptionsPattern[]]:=
 (*TODO: implement the contraction in the functions above.*)*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Generation of the su(2) linear relations*)
 
 
@@ -514,7 +528,7 @@ LinearRelationsSU2[pointslines_List,OptionsPattern[]]:=
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All Invariants of su(2) appearing in the linear relations*)
 
 
@@ -619,7 +633,7 @@ TauBoxSU3[A__,a_, b_] :=
 TauSU3 /: MakeBoxes[TauSU3[A__,a_, b_], StandardForm | TraditionalForm] := TauBoxSU3[Sequence@@(ToBoxes/@{A}),ToBoxes[a], ToBoxes[b]];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delta*)
 
 
@@ -647,7 +661,7 @@ EpsilonAFundBoxSU3[a_,b_,c_]:=
 EpsilonAFundSU3 /: MakeBoxes[EpsilonAFundSU3[a_, b_,c_], StandardForm | TraditionalForm] := EpsilonAFundBoxSU3[ToBoxes[a], ToBoxes[b],ToBoxes[c]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delta (adjoint)*)
 
 
@@ -1098,68 +1112,6 @@ End[]
 (*Attributes*)
 
 
-SetAttributes[
-    {iBox,
-	iLabel,
-	xBox,
-	xLabel,
-	IBox,
-	ILabel,
-	XBox,
-	XLabel,
-	EpsilonBoxSU2,
-	EpsilonSU2,
-	TauBoxSU2,
-	TauSU2,
-	StructureBoxSU2,
-	StructureConstantSU2,
-	DeltaBoxSU2,
-	DeltaSU2,
-	RenameDummiesSU2,
-	ContractSU2,
-	FromMatricesToEpsilons,
-	FromStructuresToEpsilonSU2,
-	InvariantsSU2,
-	LinearRelationsSU2,
-	SubstitutionsSU2,
-	aBox,
-	aLabel,
-	bBox,
-	bLabel,
-	ABox,
-	ALabel,
-	CBox,
-	CLabel,
-	TauBoxSU3,
-	TauSU3,
-	DeltaBoxSU3,
-	DeltaSU3,
-	EpsilonFundBoxSU3,
-	EpsilonAFundBoxSU3,
-	EpsilonFundSU3,
-	EpsilonAFundSU3,
-	DeltaAdjBoxSU3,
-	DeltaAdjSU3,
-	TraceBoxSU3,
-	TraceSU3,
-	StructureBoxSU3,
-	StructureConstantSU3,
-	TensorDBoxSU3,
-	TensorDSU3(*,
-	RenameDummiesSU3*),
-	ContractSU3(*,
-	JacobiSU3,
-	IndependentAdjSU3*),
-	TakeLabels,
-	ToDelta,
-	PartitionsK,
-	AdjConstraint,
-	AllInvariantsSU3,
-	AllInvariantDeltas,
-	SimplifyInvariants,
-	AllIdentitiesSU3
-	},
-    Protected
-]
+Protect@@Names["SUInvariants`*"]
 
 EndPackage[]
