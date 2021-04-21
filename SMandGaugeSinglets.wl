@@ -229,6 +229,7 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 			];
 		singlets[[2]]=Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]InvariantsSU2[SU2singlet[singlets[[2]]],"Dummies"->Length[fields]];
 		singlets[[2]]=ContractSU2[singlets[[2]],Length@fields+1];
+		singlets[[2]]=If[(Head[#]==Times)&&MatchQ[#[[1]],-1],-#,#]&/@singlets[[2]];
 		singlets=DeleteCases[#,0]&@Map[(Times@@#)&,Tuples[singlets],{1}];
 		Return[singlets];
 	]
@@ -282,7 +283,7 @@ FinalAmplitude[{fields_List,helicity_List},OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Identities Between Amplitudes*)
 
 
