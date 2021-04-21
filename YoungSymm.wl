@@ -43,13 +43,17 @@ ReLabel[x_Times,tobe_List,new_List]:=Times@@(ReLabel[#,tobe,new]&/@(List@@x))
 
 ReLabel[exp_Power,tobe_List,new_List]:=MapAt[ReLabel[#,tobe,new]&,exp,1]
 ReLabel[exp_,tobe_List,new_List]/;NumberQ[exp]:=exp
+
 ReLabel[exp_,toberelabelled_List,newlabels_List]:=
 	Block[{Simp},
 		
+		
 		Set@@@Thread[{Simp/@toberelabelled,newlabels}];
+		Simp[f_[x___][y___]]:=f[Sequence@@(Simp/@{x})][Sequence@@(Simp/@{y})];
+		Simp[f_[x___]]:=f[Sequence@@(Simp/@{x})];
 		Simp[x_]:=x;
 		
-		Map[Simp,exp,Infinity]
+		Simp@exp
 	]
 
 (*ReLabel[exp_,toberelabelled_,newlabels_]:=

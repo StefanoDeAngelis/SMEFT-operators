@@ -198,7 +198,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Gauge Singlets*)
 
 
@@ -251,7 +251,7 @@ IdenticalParticles[fields_List]:=
 		)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Final Amplitude*)
 
 
@@ -297,8 +297,8 @@ FinalAmplitude[{fields_List,helicity_List},OptionsPattern[]]:=
 HelicityConfigurations[species_List]:=Thread[{Range[Total@species],Flatten@MapThread[ConstantArray,{{-1,1,-1/2,1/2,0},species}]}]
 
 DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
-	Block[{singlets,num=Length[fields],localoperators=operators,independent={}},
-		Echo@fields;
+	Block[{singlets,num=Length[fields],localoperators=operators,independent={},SimpSU2,SimpSU3},
+		
 		If[
 			momenta>0&&fields[[-2]]===fields[[-1]],
 			Block[{Cons},
@@ -320,7 +320,7 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 			]
 		];
 
-		localoperators=Expand/@Simp/@localoperators//Echo;(*can this step be avoided?
+		localoperators=Expand/@Simp/@localoperators;(*can this step be avoided?
 		We could assign a value to certain combinations of brackets.*)
 
 		singlets=
@@ -330,24 +330,34 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 				],
 				-1
 			];
-		singlets=
-			{
-			AllIdentitiesSU3[SU3singlet[singlets[[1]]]],
-			Rule@@@(
-				If[MatchQ[#[[1,1]],-1],-#,#]&/@
-					Map[
-						ContractSU2[#,num]&,
-						Expand@(Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]List@@@SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]),
-						{2}
-					]
+		
+		SimpSU3[x_Plus]:=Plus@@(SimpSU3/@List@@x);
+		SimpSU3[x_]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2]||NumberQ[x]:=x;
+		SimpSU3[x_*a__]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2]||NumberQ[x]:=x*SimpSU3[Times[a]];
+			
+		Set@@@(MapAt[SimpSU3,#,{1}]&/@AllIdentitiesSU3[SU3singlet[singlets[[1]]]]);
+		SimpSU3[x_]:=x;
+		
+		localoperators=SimpSU3/@(localoperators)//Expand;
+		
+		SimpSU2[x_Plus]:=Plus@@(SimpSU2/@List@@x);
+		SimpSU2[x_]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x;
+		SimpSU2[x_*a__]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x*SimpSU2[Times[a]];
+		
+		Set@@@
+			(MapAt[SimpSU2,#,{1}]&/@
+				Rule@@@(
+					If[MatchQ[#[[1,1]],-1],-#,#]&/@
+						Map[
+							ContractSU2[#,num]&,
+							Expand@(Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]List@@@SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]),
+							{2}
+						]
 				)
-			}//Echo;
-		singlets=Flatten[singlets];
-		localoperators=
-			FixedPoint[
-				Expand[ReplaceRepeated[#,singlets]]&,
-				localoperators
-			]//Echo;
+			);
+		SimpSU2[x_]:=x;
+		
+		localoperators= SimpSU2/@localoperators//Expand;
 
 		If[DeleteCases[localoperators,0]==={},Return[Nothing]];
 		Do[
@@ -360,8 +370,6 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 			],
 			{i,1,Length[localoperators]}(*the first one could be skipped if we check that it is not zero, this speed the computation up of about 1 minute*)
 		];
-		
-		Echo@independent;
 		
 		Return[{fields,independent}];
 	]
@@ -392,7 +400,7 @@ IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
 	]&@(PossibleRedundancyQ/@fieldEops)*)(*we need to check all because the SU(3) invariants are generated all, not just an independent subset*)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*All Operators*)
 
 

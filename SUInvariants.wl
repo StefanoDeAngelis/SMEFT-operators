@@ -208,7 +208,7 @@ DeltaBoxSU2[A_,B_] :=
 DeltaSU2 /: MakeBoxes[DeltaSU2[A_,B_], StandardForm | TraditionalForm] := DeltaBoxSU2[ToBoxes[A],ToBoxes[B]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Symmetry properties of building blocks*)
 
 
@@ -287,7 +287,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			TauSU2[A_,a_,b_]EpsilonSU2[][c_,d_]/;(a==c):>-TauSU2[A,b][d],
 			
 			TauSU2[A_,a_][b_]EpsilonSU2[][c_,d_]/;(a==d):>TauSU2[A][c,b],
-			TauSU2[A_,a_][b_]EpsilonSU2[][c_,d_]/;(a==c):>-TauSU2[A][a,d]
+			TauSU2[A_,a_][b_]EpsilonSU2[][c_,d_]/;(a==c):>-TauSU2[A][d,b]
 			};
 
 		deltafund =
@@ -427,7 +427,7 @@ FromStructuresToEpsilonSU2[pointslines_List]:=
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*From the representation structure to the (independent&simplified) invariant tensors*)
 
 
@@ -651,13 +651,13 @@ DeltaSU3 /: MakeBoxes[DeltaSU3[a_, b_], StandardForm | TraditionalForm] := Delta
 EpsilonFundBoxSU3[a_,b_,c_]:=
 	TemplateBox[{a, b,c}, "EpsilonFundSU3",
         DisplayFunction -> (SubscriptBox["\[Epsilon]",RowBox[{#1,#2,#3}]]&),
-        InterpretationFunction -> (RowBox[{"EpsilonFundSU3","[",RowBox[{#1 ",",#2,",",#3}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"EpsilonFundSU3","[",RowBox[{#1,",",#2,",",#3}],"]"}]&)]
 EpsilonFundSU3 /: MakeBoxes[EpsilonFundSU3[a_, b_,c_], StandardForm | TraditionalForm] := EpsilonFundBoxSU3[ToBoxes[a], ToBoxes[b],ToBoxes[c]]
 
 EpsilonAFundBoxSU3[a_,b_,c_]:=
 	TemplateBox[{a, b,c}, "EpsilonAFundSU3",
         DisplayFunction -> (SuperscriptBox["\[Epsilon]",RowBox[{#1,#2,#3}]]&),
-        InterpretationFunction -> (RowBox[{"EpsilonAFundSU3","[",RowBox[{#1 ",",#2,",",#3}],"]"}]&)]
+        InterpretationFunction -> (RowBox[{"EpsilonAFundSU3","[",RowBox[{#1,",",#2,",",#3}],"]"}]&)]
 EpsilonAFundSU3 /: MakeBoxes[EpsilonAFundSU3[a_, b_,c_], StandardForm | TraditionalForm] := EpsilonAFundBoxSU3[ToBoxes[a], ToBoxes[b],ToBoxes[c]]
 
 
@@ -1042,7 +1042,7 @@ SimplifyInvariants[list_List]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Relations between the SU(3) invariants up to dimension 8 SMEFT operators (up to dimension 9 for the moment)*)
 
 
