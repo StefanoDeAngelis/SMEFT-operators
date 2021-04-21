@@ -198,7 +198,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Gauge Singlets*)
 
 
@@ -228,7 +228,7 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 						])
 			];
 		singlets[[2]]=Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]InvariantsSU2[SU2singlet[singlets[[2]]],"Dummies"->Length[fields]];
-		singlets[[2]]=ContractSU2[singlets[[2]],Length@fields];
+		singlets[[2]]=ContractSU2[singlets[[2]],Length@fields+1];
 		singlets=DeleteCases[#,0]&@Map[(Times@@#)&,Tuples[singlets],{1}];
 		Return[singlets];
 	]
@@ -251,7 +251,7 @@ IdenticalParticles[fields_List]:=
 		)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Final Amplitude*)
 
 
