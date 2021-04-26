@@ -258,11 +258,12 @@ RenameDummiesSU2[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices in the fundamental*)
 
 
 ContractSU2[exp_Plus,dummylabel_]:= Plus@@(ContractSU2[#,dummylabel]&/@(List@@exp))
+ContractSU2[exp_List,dummylabel_]:=ContractSU2[#,dummylabel]&/@exp
 
 ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
@@ -1042,7 +1043,7 @@ SimplifyInvariants[list_List]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Relations between the SU(3) invariants up to dimension 8 SMEFT operators (up to dimension 9 for the moment)*)
 
 
