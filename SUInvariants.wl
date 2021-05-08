@@ -332,8 +332,14 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 		deltaadj=
 			{
 			DeltaSU2[A_,B_]TauSU2[C_,a_,b_]/;(B==C):>TauSU2[A,a,b],
-			DeltaSU2[A_,B_]TauSU2[C_,a_][b_]/;(B==C):>TauSU2[A,a][b],
 			DeltaSU2[A_,B_]TauSU2[C_,a_,b_]/;(A==C):>TauSU2[B,a,b],
+			
+			
+			DeltaSU2[A_,B_]TauSU2[C_,a_][b_]/;(B==C):>TauSU2[A,a][b],
+			DeltaSU2[A_,B_]TauSU2[C_,a_][b_]/;(A==C):>TauSU2[B,a][b],
+			
+			DeltaSU2[A_,B_]TauSU2[C_][a_,b_]/;(B==C):>TauSU2[A][a,b],
+			DeltaSU2[A_,B_]TauSU2[C_][a_,b_]/;(A==C):>TauSU2[B][a,b],
 			
 			StructureConstantSU2[A_,B_,C_]DeltaSU2[D_,EE_] /; (C==EE):> StructureConstantSU2[A,B,D],
 			StructureConstantSU2[A_,B_,C_]DeltaSU2[D_,EE_] /; (B==EE):> StructureConstantSU2[A,D,C],
