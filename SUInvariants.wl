@@ -135,7 +135,7 @@ XBox[x_]:=
 XLabel /: MakeBoxes[XLabel[x_],StandardForm|TraditionalForm] := XBox[ToBoxes[x]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Epsilon*)
 
 
@@ -233,7 +233,7 @@ DeltaSU2[A_,B_] /; (A==B) := 3;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Rename dummies*)
 
 
@@ -252,7 +252,7 @@ RenameDummiesSU2[exp_,n_]:=
 			];
 		dummies=DeleteDuplicates[dummies];
 		
-		localexp=ReLabel[exp,dummies,Table[n+i-1,{i,1,Length[dummies]}]];
+		localexp=ReplaceAll[exp,Thread[XLabel/@dummies->XLabel/@Table[n+i-1,{i,1,Length[dummies]}]]](*ReLabel[exp,dummies,Table[n+i-1,{i,1,Length[dummies]}]]*);
 		
 		Return[localexp];
 	]
