@@ -71,14 +71,7 @@ Begin["`Private`"]
 TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm->{adj,sing,0},WWm->{sing,adj,0},BBm->{sing,sing,0},QQ->{fund,fund,1/6},uu->{afund,sing,-(2/3)},dd->{afund,sing,1/3},LL->{sing,fund,-(1/2)},ee->{sing,sing,1},QBar->{afund,afund,-(1/6)},uBar->{fund,sing,2/3},dBar->{fund,sing,-(1/3)},LBar->{sing,afund,1/2},eBar->{sing,sing,-1},HH->{sing,fund,1/2},HBar->{sing,afund,-(1/2)}}
 
 
-(* ::Subsection::Closed:: *)
-(*Fields order*)
-
-
-OrderingRule={BBm,GGm,WWm,BBp,GGp,WWp,QBar,uBar,dBar,LBar,eBar,QQ,uu,dd,LL,ee,HBar,HH}
-
-
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Fields and their helicity configuration*)
 
 
@@ -86,7 +79,7 @@ GluonsP={BBp,GGp,WWp}
 GluonsM={BBm,GGm,WWm}
 FermionsP={QQ,uu,dd,LL,ee}
 FermionsM={QBar,uBar,dBar,LBar,eBar}
-Scalars={HH,HBar}
+Scalars={HBar,HH}
 Fields={GluonsM,GluonsP,FermionsM,FermionsP,Scalars};
 
 Fermions=Join[FermionsP,FermionsM];
@@ -94,6 +87,13 @@ Bosons=Join[GluonsM,GluonsP,Scalars];
 
 FermionQ[x_]:=MemberQ[Fermions,x]
 BosonQ[x_]:=MemberQ[Bosons,x]
+
+
+(* ::Subsection:: *)
+(*Fields order*)
+
+
+OrderingRule=Flatten@Fields;
 
 
 (* ::Subsection::Closed:: *)
