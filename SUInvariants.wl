@@ -307,10 +307,10 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			EpsilonSU2[][a_,b_]EpsilonSU2[c_][d_]/;(b==c):>EpsilonSU2[][a,d],
 			EpsilonSU2[][a_,b_]EpsilonSU2[c_][d_]/;(a==c):>EpsilonSU2[][d,b],
 			
-			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(b==d):>EpsilonSU2[a][c],
-			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(a==c):>EpsilonSU2[b][d],
-			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(a==d):>-EpsilonSU2[b][c],
-			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(b==c):>-EpsilonSU2[a][d],
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(b==d):>-EpsilonSU2[a][c],
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(a==c):>-EpsilonSU2[b][d],
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(a==d):>EpsilonSU2[b][c],
+			EpsilonSU2[a_,b_]EpsilonSU2[][c_,d_]/;(b==c):>EpsilonSU2[a][d],
 
 			EpsilonSU2[a_][b_]EpsilonSU2[c_][d_]/;(b==c):>EpsilonSU2[a][d]
 			};
@@ -370,19 +370,15 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 		
 			normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[(count=count+1)]][xLabel[(count=count+1)]]TauSU2[B,xLabel[count]][xLabel[(count=count+1)]]TauSU2[C,xLabel[count]][xLabel[count-2]]};
 		
-			localexp=
-				FixedPoint[
-					Expand[ReplaceRepeated[#,normalisationtau]]&,
-					localexp
-				];
+			localexp=Expand@ReplaceRepeated[localexp,normalisationtau];
 		];
 		
 		normalisationtau=
 			{
-			TauSU2[x_,a_,b_]*TauSU2[x_,c_,d_]:>-1/4*(EpsilonSU2[b,c]*EpsilonSU2[a,d]+EpsilonSU2[b,d]*EpsilonSU2[a,c]),
-			TauSU2[x_,a_,b_]*TauSU2[x_,c_][d_]:>1/4*(EpsilonSU2[a,c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b,c]),
-			TauSU2[x_,a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b][c]),
 			TauSU2[x_,a_][b_]*TauSU2[x_,c_][d_]:>1/4*(EpsilonSU2[a,c]EpsilonSU2[][b,d]+EpsilonSU2[a][d]EpsilonSU2[c][b]),
+			TauSU2[x_,a_,b_]*TauSU2[x_,c_][d_]:>1/4*(EpsilonSU2[a,c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b,c]),
+			TauSU2[x_,i1_,i2_]*TauSU2[x_,i3_,i4_]:>-1/4*(EpsilonSU2[i2,i3]*EpsilonSU2[i1,i4]+EpsilonSU2[i2,i4]*EpsilonSU2[i1,i3]),
+			TauSU2[x_,a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b][c]),
 			TauSU2[x_,a_][b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[][b,d]+EpsilonSU2[a][d]EpsilonSU2[][b,c]),
 			TauSU2[x_][a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[][a,c]EpsilonSU2[][b,d]+EpsilonSU2[][a,d]EpsilonSU2[][b,c])
 			};
