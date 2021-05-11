@@ -7,7 +7,7 @@
 BeginPackage["SUInvariants`",{"YoungSymm`","GraphGenerator`"}]
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Messages*)
 
 
@@ -233,7 +233,7 @@ DeltaSU2[A_,B_] /; (A==B) := 3;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Rename dummies*)
 
 
@@ -318,33 +318,16 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 		decompositiongenerators=
 			{
 			TauSU2[A_,a_][b_]TauSU2[B_,c_][d_]/;(b==c) :>I/2* StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a][d]+1/4*DeltaSU2[A,B]EpsilonSU2[a][d],
+			
 			TauSU2[A_,a_,b_]TauSU2[B_][c_,d_] /;(b==d) :> -I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a][c]-1/4*DeltaSU2[A,B]EpsilonSU2[a][c],
+			TauSU2[A_,a_,b_]TauSU2[B_][c_,d_] /;(b==c) :> -I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a][d]-1/4*DeltaSU2[A,B]EpsilonSU2[a][d],
+			TauSU2[A_,a_,b_]TauSU2[B_][c_,d_] /;(a==d) :> -I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],b][c]-1/4*DeltaSU2[A,B]EpsilonSU2[b][c],
+			TauSU2[A_,a_,b_]TauSU2[B_][c_,d_] /;(a==c) :> -I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],b][d]-1/4*DeltaSU2[A,B]EpsilonSU2[b][d],
+			
 			TauSU2[A_,a_,b_]TauSU2[B_,c_][d_] /;(b==d) :>1/4*DeltaSU2[A,B]EpsilonSU2[a,c]-I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a,c],
 			TauSU2[A_,a_,b_]TauSU2[B_,c_][d_] /;(a==d) :>1/4*DeltaSU2[A,B]EpsilonSU2[b,c]-I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],b,c]
 			};
 			
-		localexp=
-			FixedPoint[
-				Expand[ReplaceRepeated[#,Join[raiseindices,lowerindices,deltafund,decompositiongenerators]]]&,
-				localexp
-			];
-			
-		normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[(count=count+1)]][xLabel[(count=count+1)]]TauSU2[B,xLabel[count]][xLabel[(count=count+1)]]TauSU2[C,xLabel[count]][xLabel[count-2]]};
-		
-		localexp=ReplaceRepeated[localexp,normalisationtau];
-		
-		normalisationtau=
-			{
-			TauSU2[x_,i1_,i2_]*TauSU2[x_,i3_,i4_]:>-1/4*(EpsilonSU2[i2,i3]*EpsilonSU2[i1,i4]+EpsilonSU2[i2,i4]*EpsilonSU2[i1,i3]),
-			TauSU2[x_,a_,b_]*TauSU2[x_,c_][d_]:>-1/4*(EpsilonSU2[a,c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b,c]),
-			TauSU2[x_,a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b][c]),
-			TauSU2[x_,a_][b_]*TauSU2[x_,c_][d_]:>-1/4*(EpsilonSU2[a,c]EpsilonSU2[][b,d]-EpsilonSU2[a][d]EpsilonSU2[c][b]),
-			TauSU2[x_,a_][b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[][b,d]+EpsilonSU2[a][d]EpsilonSU2[][b,c]),
-			TauSU2[x_][a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[][a,c]EpsilonSU2[][b,d]+EpsilonSU2[][a,d]EpsilonSU2[][b,c])
-			};
-			
-		localexp=ReplaceRepeated[localexp,normalisationtau];
-		
 		localexp=
 			FixedPoint[
 				Expand[ReplaceRepeated[#,Join[raiseindices,lowerindices,deltafund,decompositiongenerators]]]&,
@@ -379,6 +362,40 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 		localexp=
 			FixedPoint[
 				Expand[ReplaceRepeated[#,deltaadj]]&,
+				localexp
+			];
+			
+		If[
+			Length@Complement[Cases[localexp,StructureConstantSU2[A__]:>A,Infinity],Cases[localexp,TauSU2[A_,a_,b_]|TauSU2[A_,a_][b_]|TauSU2[A_][a_,b_]:>A,Infinity]]==1,	
+		
+			normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[(count=count+1)]][xLabel[(count=count+1)]]TauSU2[B,xLabel[count]][xLabel[(count=count+1)]]TauSU2[C,xLabel[count]][xLabel[count-2]]};
+		
+			localexp=
+				FixedPoint[
+					Expand[ReplaceRepeated[#,normalisationtau]]&,
+					localexp
+				];
+		];
+		
+		normalisationtau=
+			{
+			TauSU2[x_,a_,b_]*TauSU2[x_,c_,d_]:>-1/4*(EpsilonSU2[b,c]*EpsilonSU2[a,d]+EpsilonSU2[b,d]*EpsilonSU2[a,c]),
+			TauSU2[x_,a_,b_]*TauSU2[x_,c_][d_]:>1/4*(EpsilonSU2[a,c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b,c]),
+			TauSU2[x_,a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b][c]),
+			TauSU2[x_,a_][b_]*TauSU2[x_,c_][d_]:>1/4*(EpsilonSU2[a,c]EpsilonSU2[][b,d]+EpsilonSU2[a][d]EpsilonSU2[c][b]),
+			TauSU2[x_,a_][b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[][b,d]+EpsilonSU2[a][d]EpsilonSU2[][b,c]),
+			TauSU2[x_][a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[][a,c]EpsilonSU2[][b,d]+EpsilonSU2[][a,d]EpsilonSU2[][b,c])
+			};
+			
+		localexp=
+			FixedPoint[
+				Expand[ReplaceRepeated[#,normalisationtau]]&,
+				localexp
+			];
+			
+		localexp=
+			FixedPoint[
+				Expand[ReplaceRepeated[#,Join[raiseindices,lowerindices,deltafund,decompositiongenerators]]]&,
 				localexp
 			];
 			
@@ -590,7 +607,7 @@ SubstitutionsSU2[pointslines_List,OptionsPattern[]]:=
 End[]
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Invariant Tensors for the su(N) algebras*)
 
 
@@ -1043,18 +1060,16 @@ SimplifyInvariants[list_List]:=
 		Do[
 			If[
 				Head[localinv[[i]]]===Plus, (*TrueQ, which gives true only if the expression evaluates to true. Gives false in any other case.*)
+				localinv[[i]]=localinv[[i,1]]
+			];
+			If[
+				Head[localinv[[i]]]===Times,
 				localinv[[i]]=
-				If[
-					NumberQ[localinv[[i,1,1]]],
-					Delete[localinv[[i,1]],1],
-					localinv[[i,1]]
-				],
-			localinv[[i]]=
-				If[
-					NumberQ[localinv[[i,1]]],
-					Delete[localinv[[i]],1],
-					localinv[[i]]
-				]
+					If[
+						NumberQ[localinv[[i,1]]],
+						Delete[localinv[[i]],1],
+						localinv[[i]]
+					]
 			];
 			Do[
 				localinv[[j]]=localinv[[j]]/.{localinv[[i]]->0},
