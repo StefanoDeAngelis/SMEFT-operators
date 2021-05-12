@@ -267,7 +267,7 @@ ContractSU2[exp_List,dummylabel_]:=ContractSU2[#,dummylabel]&/@exp
 
 ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
-		{localexp=exp,raiseindices={},lowerindices,normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=dummylabel,count=0},
+		{localexp=exp,raiseindices={},lowerindices,normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=dummylabel},
 		
 		raiseindices=
 			{
@@ -368,7 +368,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 		If[
 			Length@Complement[Cases[localexp,StructureConstantSU2[A__]:>A,Infinity],Cases[localexp,TauSU2[A_,a_,b_]|TauSU2[A_,a_][b_]|TauSU2[A_][a_,b_]:>A,Infinity]]==1,	
 		
-			normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[(count=count+1)]][xLabel[(count=count+1)]]TauSU2[B,xLabel[count]][xLabel[(count=count+1)]]TauSU2[C,xLabel[count]][xLabel[count-2]]};
+			normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[1]][xLabel[2]]TauSU2[B,xLabel[2]][xLabel[3]]TauSU2[C,xLabel[3]][xLabel[2]]};
 		
 			localexp=Expand@ReplaceRepeated[localexp,normalisationtau];
 		];
