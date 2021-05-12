@@ -365,13 +365,33 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 				Expand[ReplaceRepeated[#,deltaadj]]&,
 				localexp
 			];
+		
+		normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[1,120]][xLabel[2,120]]TauSU2[B,xLabel[2,120]][xLabel[3,120]]TauSU2[C,xLabel[3,120]][xLabel[1,120]]};
 			
 		If[
-			Length@Complement[Cases[localexp,StructureConstantSU2[A__]:>A,Infinity],Cases[localexp,TauSU2[A_,a_,b_]|TauSU2[A_,a_][b_]|TauSU2[A_][a_,b_]:>A,Infinity]]==1,	
-		
-			normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[1]][xLabel[2]]TauSU2[B,xLabel[2]][xLabel[3]]TauSU2[C,xLabel[3]][xLabel[2]]};
-		
-			localexp=Expand@ReplaceRepeated[localexp,normalisationtau];
+			Head[localexp]===Plus,
+			
+			localexp=
+				Plus@@(
+					If[
+			
+						Length@Complement[Cases[#,StructureConstantSU2[A__]:>A,Infinity],Cases[#,TauSU2[A_,a_,b_]|TauSU2[A_,a_][b_]|TauSU2[A_][a_,b_]:>A,Infinity]]==1,	
+			
+						Expand@ReplaceRepeated[#,normalisationtau],
+						
+						#
+				
+					]&/@(List@@localexp)
+					),
+			
+			If[
+			
+				Length@Complement[Cases[localexp,StructureConstantSU2[A__]:>A,Infinity],Cases[localexp,TauSU2[A_,a_,b_]|TauSU2[A_,a_][b_]|TauSU2[A_][a_,b_]:>A,Infinity]]==1,
+			
+				localexp=Expand@ReplaceRepeated[localexp,normalisationtau];
+				
+			]
+			
 		];
 		
 		normalisationtau=
