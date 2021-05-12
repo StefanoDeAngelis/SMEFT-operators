@@ -7,7 +7,7 @@
 BeginPackage["SUInvariants`",{"YoungSymm`","GraphGenerator`"}]
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Messages*)
 
 
@@ -267,7 +267,7 @@ ContractSU2[exp_List,dummylabel_]:=ContractSU2[#,dummylabel]&/@exp
 
 ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
-		{localexp=exp,raiseindices={},lowerindices,normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=dummylabel,count=0},
+		{localexp=exp,raiseindices={},lowerindices,normalisationtau={},decompositiongenerators={},deltafund={},deltaadj={},dummies=dummylabel},
 		
 		raiseindices=
 			{
@@ -314,7 +314,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 
 			EpsilonSU2[a_][b_]EpsilonSU2[c_][d_]/;(b==c):>EpsilonSU2[a][d]
 			};
-			
+
 		decompositiongenerators=
 			{
 			TauSU2[A_,a_][b_]TauSU2[B_,c_][d_]/;(b==c) :>I/2* StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a][d]+1/4*DeltaSU2[A,B]EpsilonSU2[a][d],
@@ -322,29 +322,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			TauSU2[A_,a_,b_]TauSU2[B_,c_][d_] /;(b==d) :>1/4*DeltaSU2[A,B]EpsilonSU2[a,c]-I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a,c],
 			TauSU2[A_,a_,b_]TauSU2[B_,c_][d_] /;(a==d) :>1/4*DeltaSU2[A,B]EpsilonSU2[b,c]-I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],b,c]
 			};
-			
-		localexp=
-			FixedPoint[
-				Expand[ReplaceRepeated[#,Join[raiseindices,lowerindices,deltafund,decompositiongenerators]]]&,
-				localexp
-			];
-			
-		normalisationtau={StructureConstantSU2[A_,B_,C_]:>-4*I*TauSU2[A,xLabel[(count=count+1)]][xLabel[(count=count+1)]]TauSU2[B,xLabel[count]][xLabel[(count=count+1)]]TauSU2[C,xLabel[count]][xLabel[count-2]]};
-		
-		localexp=ReplaceRepeated[localexp,normalisationtau];
-		
-		normalisationtau=
-			{
-			TauSU2[x_,i1_,i2_]*TauSU2[x_,i3_,i4_]:>-1/4*(EpsilonSU2[i2,i3]*EpsilonSU2[i1,i4]+EpsilonSU2[i2,i4]*EpsilonSU2[i1,i3]),
-			TauSU2[x_,a_,b_]*TauSU2[x_,c_][d_]:>-1/4*(EpsilonSU2[a,c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b,c]),
-			TauSU2[x_,a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[b][d]+EpsilonSU2[a][d]EpsilonSU2[b][c]),
-			TauSU2[x_,a_][b_]*TauSU2[x_,c_][d_]:>-1/4*(EpsilonSU2[a,c]EpsilonSU2[][b,d]-EpsilonSU2[a][d]EpsilonSU2[c][b]),
-			TauSU2[x_,a_][b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[a][c]EpsilonSU2[][b,d]+EpsilonSU2[a][d]EpsilonSU2[][b,c]),
-			TauSU2[x_][a_,b_]*TauSU2[x_][c_,d_]:>-1/4*(EpsilonSU2[][a,c]EpsilonSU2[][b,d]+EpsilonSU2[][a,d]EpsilonSU2[][b,c])
-			};
-			
-		localexp=ReplaceRepeated[localexp,normalisationtau];
-		
+
 		localexp=
 			FixedPoint[
 				Expand[ReplaceRepeated[#,Join[raiseindices,lowerindices,deltafund,decompositiongenerators]]]&,
@@ -369,7 +347,8 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			
 			
 			StructureConstantSU2[A_,B_,C_]StructureConstantSU2[D_,E_,F_]:>-(DeltaSU2[A,F]*DeltaSU2[B,E]*DeltaSU2[C,D])+DeltaSU2[A,E]*DeltaSU2[B,F]*DeltaSU2[C,D]+DeltaSU2[A,F]*DeltaSU2[B,D]*DeltaSU2[C,E]-DeltaSU2[A,D]*DeltaSU2[B,F]*DeltaSU2[C,E]-DeltaSU2[A,E]*DeltaSU2[B,D]*DeltaSU2[C,F]+DeltaSU2[A,D]*DeltaSU2[B,E]*DeltaSU2[C,F],
-			
+
+
 			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==D):> DeltaSU2[A,B],
 			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==B):> DeltaSU2[A,D],
 
@@ -386,6 +365,10 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 		
 		Return[localexp];
 ]
+
+
+(* ::Subsubsection::Closed:: *)
+(*Independent adjoint structures*)
 
 
 (* ::Text:: *)
@@ -590,7 +573,7 @@ SubstitutionsSU2[pointslines_List,OptionsPattern[]]:=
 End[]
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Invariant Tensors for the su(N) algebras*)
 
 
