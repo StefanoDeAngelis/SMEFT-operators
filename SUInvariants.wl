@@ -314,7 +314,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 
 			EpsilonSU2[a_][b_]EpsilonSU2[c_][d_]/;(b==c):>EpsilonSU2[a][d]
 			};
-			
+
 		decompositiongenerators=
 			{
 			TauSU2[A_,a_][b_]TauSU2[B_,c_][d_]/;(b==c) :>I/2* StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a][d]+1/4*DeltaSU2[A,B]EpsilonSU2[a][d],
@@ -352,7 +352,8 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			
 			
 			StructureConstantSU2[A_,B_,C_]StructureConstantSU2[D_,E_,F_]:>-(DeltaSU2[A,F]*DeltaSU2[B,E]*DeltaSU2[C,D])+DeltaSU2[A,E]*DeltaSU2[B,F]*DeltaSU2[C,D]+DeltaSU2[A,F]*DeltaSU2[B,D]*DeltaSU2[C,E]-DeltaSU2[A,D]*DeltaSU2[B,F]*DeltaSU2[C,E]-DeltaSU2[A,E]*DeltaSU2[B,D]*DeltaSU2[C,F]+DeltaSU2[A,D]*DeltaSU2[B,E]*DeltaSU2[C,F],
-			
+
+
 			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==D):> DeltaSU2[A,B],
 			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==B):> DeltaSU2[A,D],
 
@@ -399,6 +400,10 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 		
 		Return[localexp];
 ]
+
+
+(* ::Subsubsection::Closed:: *)
+(*Independent adjoint structures*)
 
 
 (* ::Text:: *)
