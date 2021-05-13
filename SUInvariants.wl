@@ -325,7 +325,10 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 			TauSU2[A_,a_,b_]TauSU2[B_][c_,d_] /;(a==c) :> -I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],b][d]-1/4*DeltaSU2[A,B]EpsilonSU2[b][d],
 			
 			TauSU2[A_,a_,b_]TauSU2[B_,c_][d_] /;(b==d) :>1/4*DeltaSU2[A,B]EpsilonSU2[a,c]-I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],a,c],
-			TauSU2[A_,a_,b_]TauSU2[B_,c_][d_] /;(a==d) :>1/4*DeltaSU2[A,B]EpsilonSU2[b,c]-I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],b,c]
+			TauSU2[A_,a_,b_]TauSU2[B_,c_][d_] /;(a==d) :>1/4*DeltaSU2[A,B]EpsilonSU2[b,c]-I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++],b,c],
+			
+			TauSU2[A_,a_][b_]TauSU2[B_][c_,d_] /;(a==d) :> -I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++]][b,c]-1/4*DeltaSU2[A,B]EpsilonSU2[][b,c],
+			TauSU2[A_,a_][b_]TauSU2[B_][c_,d_] /;(a==c) :> -I/2*StructureConstantSU2[A,B,XLabel[dummies]]TauSU2[XLabel[dummies++]][b,d]-1/4*DeltaSU2[A,B]EpsilonSU2[][b,d]
 			};
 			
 		localexp=
