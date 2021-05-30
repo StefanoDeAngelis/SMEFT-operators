@@ -14,7 +14,8 @@ BeginPackage["YoungSymm`"]
 ReLabel::usage = "..."
 Symmetrise::usage = "..."
 MultipleSymmetrise::usage = "..."
-YoungSymmetriser::usage = "..."
+YoungSymmetrise::usage = "..."
+MultipleYoungSymmetrise::usage = "..."
 
 
 (* ::Section:: *)
@@ -24,7 +25,7 @@ YoungSymmetriser::usage = "..."
 Begin["`Private`"]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*ReLabel*)
 
 
@@ -69,7 +70,7 @@ ReLabel[exp_,toberelabelled_List,newlabels_List]:=
 	]*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Symmetrise*)
 
 
@@ -107,7 +108,7 @@ Symmetrise[exp_,tobesymmetrised_List,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Multiple-Symmetrise*)
 
 
@@ -137,7 +138,9 @@ MultipleSymmetrise[exp_,tobesymmetrised__List,OptionsPattern[]]:=
 (*Young-Symmetrise*)
 
 
-YoungSymmetriser[exp_,symmetries_List]:=
+YoungSymmetrise[exp_,tobesymmetrised_?(Length[#]<=1&)]:=exp
+
+YoungSymmetrise[exp_,symmetries_List]:=
 	Module[{antisymmetries,symmetrisation},
 
 		(*Antisymmetric indices*)
@@ -163,6 +166,24 @@ YoungSymmetriser[exp_,symmetries_List]:=
 ]
 
 
+(* ::Subsection:: *)
+(*Multiple Young-Symmetrise*)
+
+
+MultipleYoungSymmetrise[exp_,tobesymmetrised__List]:=
+	Module[{localexp=exp,localsymm={tobesymmetrised},coefficient},
+
+		Do[
+			localexp=YoungSymmetrise[localexp,i],
+			{i,localsymm}
+		];
+
+		localexp=Expand[localexp];
+
+		Return[localexp];
+	]
+
+
 End[]
 
 
@@ -174,7 +195,8 @@ SetAttributes[
     {ReLabel,
     Symmetrise,
     MultipleSymmetrise,
-    YoungSymmetriser},
+    YoungSymmetrise,
+    MultipleYoungSymmetrise},
     Protected
 ]
 

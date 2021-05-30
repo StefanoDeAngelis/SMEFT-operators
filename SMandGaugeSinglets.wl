@@ -123,7 +123,7 @@ ColourSingletDoable[fields_List]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Combinations of fields*)
 
 
@@ -135,7 +135,7 @@ CombinationsOfFields[listNumbers_List]:=
 				Table[
 					(*Sort[*) (*this order sort\[Rule]deleteduplicates\[Rule]sort is slightly faster than sort\[Rule]sort\[Rule]deleteduplicates*)
 						DeleteDuplicates[
-							Sort(*By[#,Position[OrderingRule,#]&]&*)/@ (*sort to recognise duplicates*)
+							SortBy[#,Position[OrderingRule,#]&]&/@ (*sort to recognise duplicates*)
 								Tuples[Fields[[i]],listNumbers[[i]]] (*given the species, we take listNumber[[i]] of them maybe this can be fastened using IntegerPartions[listNumber[[i]]], PadRight[#,Length[Fields[[i]]]] and Permutations)*)
 						]
 					(*]*),
@@ -198,7 +198,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Gauge Singlets*)
 
 
@@ -252,7 +252,7 @@ IdenticalParticles[fields_List]:=
 		)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Final Amplitude*)
 
 
@@ -283,7 +283,7 @@ FinalAmplitude[{fields_List,helicity_List},OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Identities Between Amplitudes*)
 
 
