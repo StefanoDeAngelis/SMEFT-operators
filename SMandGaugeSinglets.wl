@@ -44,15 +44,14 @@ sing::usage = "..."
 fund::usage = "..."
 afund::usage = "..."
 
+Nf::usage = "..."
+
 FermionQ::usage = ".."
 BosonQ::usage = ".."
 
 CombinationsOfFields::usage = "..."
 
 GaugeSinglets::usage = "..."
-
-FinalAmplitude::usage = "..."
-IdentitiesBetweenAmplitudes::usage = "..."
 
 AllOperators::usage = "..."
 
@@ -123,7 +122,7 @@ ColourSingletDoable[fields_List]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Combinations of fields*)
 
 
@@ -239,41 +238,68 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 (*IdenticalParticles*)
 
 
+(*Given a list of fields, IndenticalParticles return a list of list of list: {bosons,fermions} with bosons={{positions of identical bosons of type1},{positions of identical bosons of type2},...}*)
 IdenticalParticles[fields_List]:=
-	If[FermionQ[fields[[1]]],{#[[2]],#[[1]]},#]&@
+	If[FermionQ[fields[[1]]],{#[[2]],#[[1]]},#]&@ (*if there are no vectors, we find {{fermions},{scalars}} and then we have to swap them*)
 		(
-		If[Length[#]===1,Append[#,{{}}],#]&@
+		If[Length[#]===1,Append[#,{{}}],#]&@ (*if no bosons (or no fermions) are in the operator we have to append a list*)
 			GatherBy[
-				GatherBy[Range@Length[fields],fields[[#]]&],
+				GatherBy[Range@Length[fields],fields[[#]]&],(*Gather identical particles in sublists, which contain their position*)
 				BosonQ[
 					fields[[#[[1]]]]
-				]&
+				]&(*Gather the sublists into two lists, with bosons and fermions*)
 			]
 		)
+
+OrderedListPartition[list_List]:=FoldPairList[TakeDrop,list,#]&/@IntegerPartitions[Length[list]]
+AllTableaux[fermionlist_List]:=Tuples[OrderedListPartition/@fermionlist]
+
+(*Block[{$ContextPath},Needs["Combinatorica`"]//Quiet]
+myTableaux[{}]:={{}}
+myTableaux[single_List?(Length[#]==1&)]:={{single}}
+myTableaux[list_List]:=ReplaceAll[Combinatorica`Tableaux[#],Thread[Range@#->list]]&@(Length@list)
+AllTableaux[fermionlists_List]:=Tuples[myTableaux/@fermionlists]*)
+
+ConjugatePartition[l_List]:=Module[{i,r=Reverse[l],n=Length[l]},Table[n+1-Position[r,_?(#>=i&),Infinity,1][[1,1]],{i,l[[1]]}]](*copied from Wolfram website https://mathworld.wolfram.com/ConjugatePartition.html*)
+HookContentFormula[partition_List,flavours_]:=
+	If[
+		partition==={},
+		1,
+		Product[(flavours-i+j),{j,Length@partition},{i,1,partition[[j]]}]/Product[partition[[j]]+#[[i]]+1-i-j,{j,Length@partition},{i,1,partition[[j]]}]&@ConjugatePartition[partition]
+	]
 
 
 (* ::Subsection:: *)
 (*Final Amplitude*)
 
 
-Options[FinalAmplitude]={"RenormalisableTree"->False}
+Options[FinalAmplitude]={"RenormalisableTree"->False};
 
-FinalAmplitude[{fields_List,helicity_List},OptionsPattern[]]:=
-	Module[{colourfactors=GaugeSinglets[fields,"RenormalisableTree"->OptionValue["RenormalisableTree"]],amplitudes},
+FinalAmplitude[d_Integer,species_List][{fields_List,helicity_List},OptionsPattern[]]:=
+	Module[{colourfactors=GaugeSinglets[fields,"RenormalisableTree"->OptionValue["RenormalisableTree"]],amplitudes,allstructures},
 		
 		If[colourfactors==Null,Return[Nothing]];
 		
-		amplitudes=Times@@@Tuples[{colourfactors,helicity}];
+		allstructures=Times@@@Tuples[{colourfactors,helicity}];
 		
 		If[\[Not]DuplicateFreeQ[fields],
 			Block[{bosons,fermions},
 				{bosons,fermions}=IdenticalParticles[fields];
-				amplitudes=MultipleSymmetrise[#,Sequence@@bosons]&/@amplitudes;
-				amplitudes=MultipleSymmetrise[#,Sequence@@fermions,"AntiSymmetric"->True]&/@amplitudes;
-				amplitudes=DeleteCases[amplitudes,_?PossibleZeroQ];
-				amplitudes=DeleteDuplicates[amplitudes,(#1===#2||#1===-#2)&];
-			];
+				fermions=AllTableaux[fermions];
+				amplitudes=MultipleSymmetrise[#,Sequence@@bosons]&/@allstructures;
+				amplitudes=Table[{Times@@(HookContentFormula[#,Nf]&/@Map[Length,i,{2}]),MultipleYoungSymmetrise[#,(Sequence@@i)]&/@amplitudes},{i,fermions}];
+(*amplitudes=Map[Flatten[#,1]&,MapAt[DeleteDuplicates,Transpose/@GatherBy[amplitudes,#[[1]]&],{All,1}],{2}]; (*this steps gather together all the structures which have the same Young diagram, but different std Young tableaux*)
+amplitudes=MapAt[Times@@(HookContentFormula[#,Nf]&/@#)&,amplitudes,{All,1}];*)
+				amplitudes=MapAt[DeleteCases[#,_?PossibleZeroQ]&,#,2]&/@amplitudes;
+				amplitudes=MapAt[DeleteDuplicates[#,(#1===#2||#1===-#2)&]&,#,2]&/@amplitudes;
+				amplitudes=DeleteCases[amplitudes,{_,{}}];
+			],
+			amplitudes={{Power[Nf,Count[fields,_?FermionQ]],allstructures}}
 		];
+
+(*DeleteRedundant has to be here because for SU(3) not only the independent structures are generated, but all of them for the moment*)
+			amplitudes=If[\[Not]MatchQ[amplitudes,{}],DeleteRedundant[{fields,{#}},d-Total@(species*{2,2,3/2,3/2,1}),allstructures]&/@amplitudes,{}];
+			amplitudes=DeleteCases[amplitudes,{_,{}}];
 		
 		If[
 			MatchQ[amplitudes,{}],
@@ -293,15 +319,27 @@ FinalAmplitude[{fields_List,helicity_List},OptionsPattern[]]:=
 (*TODO: the Simplify has to be removed if we want to go beyond dimension 8 (setting the first addend equal to minus the rest for each (local)operator recursively.*)
 
 
-(*PossibleRedundancyQ[{fields_List,ops_List}]:=(\[Not]DuplicateFreeQ[fields])*)
-
 HelicityConfigurations[species_List]:=Thread[{Range[Total@species],Flatten@MapThread[ConstantArray,{{-1,1,-1/2,1/2,0},species}]}]
 
-DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
+AllCoefficients[poly_,vars_]:=Coefficient[poly,#]&/@vars
+LinIndependentAmplitudes[matrix_?MatrixQ]:=
+	Block[{indeps={},count=0},
+		Do[
+			If[Length@#>count,count++;AppendTo[indeps,i]]&@
+				DeleteCases[#,Table[0,Length@matrix[[1]]]]&@
+					RowReduce[
+						matrix[[;;i]]
+					],
+			{i,Length@matrix}
+		];
+		Return[indeps]
+	]
+
+DeleteRedundant[{fields_List,operators_List},momenta_Integer,allstructures_List]:=
 	Block[{singlets,num=Length[fields],localoperators=operators,independent={},SimpSU2,SimpSU3},
-		
+
 		If[
-			momenta>0&&fields[[-2]]===fields[[-1]],
+			momenta>0&&fields[[-2]]===fields[[-1]],(*two necessary condition for the momentum of the n^th-particle to appear is that the number of derivatives is non zero and it is identical to the *)
 			Block[{Cons},
 
 				Cons[x_Plus]:=Plus@@(Cons/@List@@x);
@@ -317,12 +355,13 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 							)
 						];
 
-				localoperators=Expand/@Cons/@localoperators
+				localoperators=MapAt[Expand[Cons[#]]&,#,{2,All}]&/@localoperators
 			]
 		];
 
-		localoperators=Expand/@Simp/@localoperators;(*can this step be avoided?
-		We could assign a value to certain combinations of brackets.*)
+		localoperators=MapAt[Expand[Simp[#]]&,#,{2,All}]&/@localoperators;(*can this step be avoided?
+		We could assign a value to certain combinations of brackets.
+	No! We cannot a value to Times, because they are always products of spinor invariants.*)
 
 		singlets=
 			Drop[
@@ -336,10 +375,10 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 		SimpSU3[x_]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2]||NumberQ[x]:=x;
 		SimpSU3[x_*a__]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2]||NumberQ[x]:=x*SimpSU3[Times[a]];
 			
-		Set@@@(MapAt[SimpSU3,#,{1}]&/@AllIdentitiesSU3[SU3singlet[singlets[[1]]]]);
+		Set@@@(MapAt[SimpSU3,#,{1}]&/@AllIdentitiesSU3[SMandGaugeSinglets`Private`SU3singlet[singlets[[1]]]]);
 		SimpSU3[x_]:=x;
 		
-		localoperators=SimpSU3/@(localoperators)//Expand;
+		localoperators=MapAt[Expand[SimpSU3[#]]&,#,{2,All}]&/@localoperators;
 		
 		SimpSU2[x_Plus]:=Plus@@(SimpSU2/@List@@x);
 		SimpSU2[x_]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x;
@@ -351,32 +390,24 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer]:=
 					If[MatchQ[#[[1,1]],-1],-#,#]&/@
 						Map[
 							ContractSU2[#,num]&,
-							Expand@(Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]List@@@SubstitutionsSU2[SU2singlet[singlets[[2]]],"Dummies"->num]),
+							Expand@(Product[EpsilonSU2[][jLabel[i],iLabel[i]],{i,Flatten@Position[singlets[[2]],afund]}]List@@@SubstitutionsSU2[SMandGaugeSinglets`Private`SU2singlet[singlets[[2]]],"Dummies"->num]),
 							{2}
 						]
 				)
 			);
 		SimpSU2[x_]:=x;
 		
-		localoperators= SimpSU2/@localoperators//Expand;
+		localoperators=MapAt[Expand[SimpSU2[#]]&,#,{2,All}]&/@localoperators;
 
-		If[DeleteCases[localoperators,0]==={},Return[Nothing]];
-		Do[
-			If[
-				\[Not]MatchQ[
-					Simplify[localoperators[[i]],Table[localoperators[[j]]==0,{j,i-1}]],
-					0
-				],
-				AppendTo[independent,operators[[i]]];
-			],
-			{i,1,Length[localoperators]}(*the first one could be skipped if we check that it is not zero, this speed the computation up of about 1 minute*)
-		];
+		localoperators=MapAt[AllCoefficients[#,allstructures]&,#,{2,All}]&/@localoperators;
+		localoperators=LinIndependentAmplitudes[#[[2]]]&/@localoperators;
+		localoperators=Transpose[{localoperators,operators}];
+		localoperators={#[[2,1]],Part[#[[2,2]],#[[1]]]}&/@localoperators;
 		
-		Return[{fields,independent}];
+		Return[Flatten[localoperators,1]];
 	]
 	
 IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
-	(*If[Or@@#,*)
 		Block[{Simp,localOps=fieldEops},
 
 			Set@@@
@@ -388,17 +419,11 @@ IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
 			Simp[x_Plus]:=Plus@@(Simp/@List@@x);
 			Simp[x_]/;NumberQ[x]:=x;
 			Simp[x_*a__]/;MatchQ[Head[x],EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2|TauSU3|DeltaSU3|DeltaAdjSU3|TraceSU3|EpsilonFundSU3|EpsilonAFundSU3]||NumberQ[x]:=x*Simp[Times[a]];
-			(*probably the Simp could be avoided just by assigning the substitutions to the combination of brackets.
-			In order to do this, we have to make SpinorAngleBracket and SpinorSquareBracket local variables in block.
-			Once we do this, the angles and the squares should behave correctly in MatchQ*)
 
-			(*localOps=MapAt[DeleteRedundant[#,d-Total@(species*{2,2,3/2,3/2,1})]&,localOps,Position[#,True]]*)
-			localOps=DeleteRedundant[#,d-Total@(species*{2,2,3/2,3/2,1})]&/@localOps;
+			localOps=FinalAmplitude[d,species]/@localOps;
 			
-			Return[(*{species,*)localOps(*}*)]
-		](*,
-		Return[(*{species,*)fieldEops(*}*)]
-	]&@(PossibleRedundancyQ/@fieldEops)*)(*we need to check all because the SU(3) invariants are generated all, not just an independent subset*)
+			Return[{species,localOps}]
+		]
 
 
 (* ::Subsection:: *)
@@ -416,9 +441,7 @@ AllOperators[d_]:=
 		
 		ops=If[MatchQ[#[[1,2]],{}],Nothing,{#[[1,1]],Tuples[{#[[1,2]],{#[[2]]}}]}]&/@ops;
 		
-		ops=MapAt[FinalAmplitude/@#&,#,2]&/@ops;
-		
-		ops=IdentitiesBetweenAmplitudes[d][#]&/@ops
+		ops=IdentitiesBetweenAmplitudes[d]/@ops
 	]
 
 

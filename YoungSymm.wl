@@ -138,7 +138,7 @@ MultipleSymmetrise[exp_,tobesymmetrised__List,OptionsPattern[]]:=
 (*Young-Symmetrise*)
 
 
-YoungSymmetrise[exp_,tobesymmetrised_?(Length[#]<=1&)]:=exp
+YoungSymmetrise[exp_,tobesymmetrised_?(Length[#]==0&)]:=exp
 
 YoungSymmetrise[exp_,symmetries_List]:=
 	Module[{antisymmetries,symmetrisation},
