@@ -282,11 +282,13 @@ PlanarMomentumConservation[{angles_,squares_}]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*From structure to Angles&Squares structures*)
 
 
-HelicityStructures[{anglestructure_List,squarestructure_List}]:=
+Options[HelicityStructures]={"MomentumConservation"->True}
+
+HelicityStructures[{anglestructure_List,squarestructure_List},OptionsPattern[]]:=
 	Module[{formfactors,angles,squares},
 
 		angles=AllNonIntersectingGraphs[Part[#,2]&/@anglestructure];
@@ -294,9 +296,12 @@ HelicityStructures[{anglestructure_List,squarestructure_List}]:=
 
 		formfactors=Tuples[{angles,squares}];
 		
-		If[
-			anglestructure[[-2,2]]+squarestructure[[-2,2]]!=0||anglestructure[[1,2]]+squarestructure[[1,2]]!=0,
-			formfactors=PlanarMomentumConservation/@formfactors
+		If[TrueQ@OptionValue["MomentumConservation"],
+			If[
+				anglestructure[[-2,2]]+squarestructure[[-2,2]]!=0||anglestructure[[1,2]]+squarestructure[[1,2]]!=0,
+				Print[formfactors];
+				formfactors=PlanarMomentumConservation/@formfactors
+			]
 		];
 	
 		formfactors=FromMatrixToSpinors[#,Part[#,1]&/@anglestructure]&/@formfactors;
@@ -333,18 +338,24 @@ IndependentFormFactors[d_Integer,OptionsPattern[]]:=
 (*Independent Helicity Factors*)
 
 
-IndependentHelicityFactors[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]]]&)]:=
+Options[IndependentHelicityFactors]={"MomentumConservation"->True}
+
+IndependentHelicityFactors[dim_Integer,OptionsPattern[]][list__?(Length[#]==2 && IntegerQ[2*#[[2]]]&)]:=
 	Module[{labels=Part[#,1]&/@{list},angles,squares,structures},
 	
 		{angles,squares}={Abs[#]-#,Abs[#]+#}&@(Part[#,2]&/@{list});
 		
-		structures=Append[#,0]&/@PermutationsOfPartitions[dim-Total[angles]/2-Total[squares]/2,Length[angles]-1];
+		If[
+			TrueQ@OptionValue["MomentumConservation"],
+			structures=Append[#,0]&/@PermutationsOfPartitions[dim-Total[angles]/2-Total[squares]/2,Length[angles]-1],
+			structures=PermutationsOfPartitions[dim-Total[angles]/2-Total[squares]/2,Length[angles]]
+		];
 		
 		structures={angles+#,squares+#}&/@structures;
 		
 		structures=If[Length[#]<2,Nothing,#]&/@Map[IsLoopLessDoable,structures,{2}];
 		
-		structures=HelicityStructures/@Map[Thread[{labels,#}]&,structures,{2}];
+		structures=HelicityStructures[#,"MomentumConservation"->OptionValue["MomentumConservation"]]&/@Map[Thread[{labels,#}]&,structures,{2}];
 		
 		Return[Flatten@structures]
 	]
