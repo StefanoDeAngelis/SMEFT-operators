@@ -299,7 +299,6 @@ HelicityStructures[{anglestructure_List,squarestructure_List},OptionsPattern[]]:
 		If[TrueQ@OptionValue["MomentumConservation"],
 			If[
 				anglestructure[[-2,2]]+squarestructure[[-2,2]]!=0||anglestructure[[1,2]]+squarestructure[[1,2]]!=0,
-				Print[formfactors];
 				formfactors=PlanarMomentumConservation/@formfactors
 			]
 		];
