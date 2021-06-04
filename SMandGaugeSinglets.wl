@@ -287,7 +287,7 @@ FinalAmplitude[d_Integer,species_List][{fields_List,helicity_List},OptionsPatter
 				{bosons,fermions}=IdenticalParticles[fields];
 				fermions=AllTableaux[fermions];
 				amplitudes=MultipleSymmetrise[#,Sequence@@bosons]&/@allstructures;
-				amplitudes=Table[{Times@@(HookContentFormula[#,Nf]&/@Map[Length,i,{2}]),MultipleYoungSymmetrise[#,(Sequence@@i)]&/@amplitudes},{i,fermions}];
+				amplitudes=Table[{(*Times@@(HookContentFormula[#,Nf]&/@Map[Length,i,{2}])*)i,MultipleYoungSymmetrise[#,(Sequence@@i)]&/@amplitudes},{i,fermions}];
 (*amplitudes=Map[Flatten[#,1]&,MapAt[DeleteDuplicates,Transpose/@GatherBy[amplitudes,#[[1]]&],{All,1}],{2}]; (*this steps gather together all the structures which have the same Young diagram, but different std Young tableaux*)
 amplitudes=MapAt[Times@@(HookContentFormula[#,Nf]&/@#)&,amplitudes,{All,1}];*)
 				amplitudes=MapAt[DeleteCases[#,_?PossibleZeroQ]&,#,2]&/@amplitudes;
@@ -422,7 +422,7 @@ IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
 
 			localOps=FinalAmplitude[d,species]/@localOps;
 			
-			Return[{species,localOps}]
+			Return[(*{species,*)localOps(*}*)]
 		]
 
 
@@ -441,7 +441,9 @@ AllOperators[d_]:=
 		
 		ops=If[MatchQ[#[[1,2]],{}],Nothing,{#[[1,1]],Tuples[{#[[1,2]],{#[[2]]}}]}]&/@ops;
 		
-		ops=IdentitiesBetweenAmplitudes[d]/@ops
+		ops=IdentitiesBetweenAmplitudes[d]/@ops;
+		
+		ops=Flatten[ops,1]
 	]
 
 
