@@ -294,7 +294,7 @@ amplitudes=MapAt[Times@@(HookContentFormula[#,Nf]&/@#)&,amplitudes,{All,1}];*)
 				amplitudes=MapAt[DeleteDuplicates[#,(#1===#2||#1===-#2)&]&,#,2]&/@amplitudes;
 				amplitudes=DeleteCases[amplitudes,{_,{}}];
 			],
-			amplitudes={{(*Power[Nf,Count[fields,_?FermionQ]]*)(*{{}}*)({#} & /@ Position[fields, _?FermionQ]),allstructures}}
+			amplitudes={{(*Power[Nf,Count[fields,_?FermionQ]]*)(*{{}}*)If[MemberQ[fields,_?FermionQ],#,{#}]&@({#} & /@ Position[fields, _?FermionQ]),allstructures}}
 		];
 
 (*DeleteRedundant has to be here because for SU(3) not only the independent structures are generated, but all of them for the moment*)
