@@ -197,7 +197,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Gauge Singlets*)
 
 
@@ -220,7 +220,7 @@ GaugeSinglets[fields_List,OptionsPattern[]]:=
 		adjointSU3=Flatten[Position[singlets[[1]],adj]];
 		singlets[[1]]=
 			SimplifyInvariants[
-				ContractSU3[#(*,Length[fields]+1*)]&/@
+				ContractSU3[#,Length[fields]+1]&/@
 					(Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,adjointSU3}]
 						AllInvariantDeltas[
 							SU3singlet[singlets[[1]]]
@@ -269,7 +269,7 @@ HookContentFormula[partition_List,flavours_]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Final Amplitude*)
 
 
@@ -309,7 +309,7 @@ amplitudes=MapAt[Times@@(HookContentFormula[#,Nf]&/@#)&,amplitudes,{All,1}];*)
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Identities Between Amplitudes*)
 
 
@@ -426,7 +426,7 @@ IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
 		]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*All Operators*)
 
 

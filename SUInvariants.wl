@@ -39,6 +39,7 @@ SubstitutionsSU2::usage = "..."
 
 aLabel::usage = "..."
 bLabel::usage = "..."
+cLabel::usage = "..."
 
 ALabel::usage = "..."
 CLabel::usage = "..."
@@ -656,8 +657,14 @@ bBox[x_]:=
 		DisplayFunction->(SubscriptBox["b",RowBox[{#}]]&),
 		InterpretationFunction->(RowBox[{"bLabel","[",RowBox[{#}],"]"}]&)]
 		
+cBox[x_]:=
+	TemplateBox[{x},"cLabel",
+		DisplayFunction->(SubscriptBox["c",RowBox[{#}]]&),
+		InterpretationFunction->(RowBox[{"cLabel","[",RowBox[{#}],"]"}]&)]
+		
 aLabel /: MakeBoxes[aLabel[x_],StandardForm|TraditionalForm] :=aBox[ToBoxes[x]]
 bLabel /: MakeBoxes[bLabel[x_],StandardForm|TraditionalForm] :=bBox[ToBoxes[x]]
+cLabel /: MakeBoxes[cLabel[x_],StandardForm|TraditionalForm] :=cBox[ToBoxes[x]]
 
 
 (* ::Subsubsection::Closed:: *)
@@ -807,26 +814,32 @@ TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 (*Rename dummies*)
 
 
-(*RenameDummiesSU3[x_Plus,n_]:=Plus@@(RenameDummiesSU3[#,n]&/@(List@@x))
+RenameDummiesSU3[x_Plus,n_]:=Plus@@(RenameDummiesSU3[#,n]&/@(List@@x))
 
 RenameDummiesSU3[exp_,n_]:=
 	Module[{localexp,dummies={}},
 		Cases[
 			{exp},
-			HoldPattern[CLabel[h_]]:>AppendTo[dummies,h],
+			HoldPattern[aLabel[h_]]:>AppendTo[dummies,aLabel[h]],
 			\[Infinity]
 		];
+		Cases[
+			{exp},
+			HoldPattern[bLabel[h_]]:>AppendTo[dummies,bLabel[h]],
+			\[Infinity]
+		];
+		dummies=DeleteCases[dummies,_?(Count[dummies,#]!=2&)];
 		dummies=DeleteDuplicates[dummies];
-		localexp=ReLabel[exp,dummies,Table[n+i-1,{i,1,Length[dummies]}]];
+		localexp=ReplaceAll[exp,Thread[dummies->Table[cLabel[n+i],{i,0,Length[dummies]-1}]]];
 		Return[localexp];
-	]*)
+	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices*)
 
 
-ContractSU3[exp_(*,dummylabel_*)]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
+ContractSU3[exp_,dummylabel_:0]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
 		{localexp=exp,eliminatedeltas,decompositiongenerators(*,normandsymm*)(*,dummies=dummylabel*),compositiongenerators},
 		eliminatedeltas=
@@ -885,7 +898,9 @@ ContractSU3[exp_(*,dummylabel_*)]:= (*dummylabel is needed because I don't want 
 			TauSU3[A__,a_,b_]/;a==b&&Length[{A}]>1:>TraceSU3[A]
 			};
 		localexp=ReplaceRepeated[localexp,compositiongenerators];
-		(*localexp=RenameDummiesSU3[localexp,dummylabel];*)
+		
+		If[dummylabel!=0,localexp=RenameDummiesSU3[localexp,dummylabel]];
+		
 		Return[localexp];
 	]
 
@@ -1075,7 +1090,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All invariant (representation with deltas)*)
 
 
