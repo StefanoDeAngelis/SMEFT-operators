@@ -835,9 +835,12 @@ RenameDummiesSU3[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices*)
 
+
+ContractSU3[exp_Plus,dummylabel_:0]:= Plus@@(ContractSU3[#,dummylabel]&/@(List@@exp))
+ContractSU3[exp_List,dummylabel_:0]:=ContractSU3[#,dummylabel]&/@exp
 
 ContractSU3[exp_,dummylabel_:0]:= (*dummylabel is needed because I don't want the labels to mix with actual fields in the form factor, which will be symmetrised*)
 	Module[
