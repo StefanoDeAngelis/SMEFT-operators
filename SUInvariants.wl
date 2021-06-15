@@ -258,7 +258,7 @@ RenameDummiesSU2[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices in the fundamental*)
 
 
@@ -974,7 +974,7 @@ PartitionsK[list_,l_]:= (*Iterative definition of the partitions of a set in sub
 		]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*All invariants (list form)*)
 
 
@@ -1018,7 +1018,7 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 				labelsfund=
 					Join@@
 						Table[
-							{i,##}&@@@PartitionsK[Complement[labelsfund,i],3],
+							{i,##}&@@@Map[List,PartitionsK[Complement[labelsfund,i],3],{3}],
 							{i,Flatten[Permutations/@Subsets[labelsfund,{numafund}],1]}
 						];
 			
@@ -1026,14 +1026,14 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 					MapAt[
 						Sequence@@
 							Transpose[
-								Join[{labelsantif},{#}]
+								Join[{#},{labelsantif}]
 							]&,
 						labelsfund,
 						{All,1}
 					];
 				allinvariants=If[MemberQ[#,x_/;(x[[1]]==x[[2]])],Nothing,#]&/@allinvariants,
 				
-				allinvariants=PartitionsK[labelsfund,3];
+				allinvariants=Map[List,PartitionsK[labelsfund,3],{3}];
 			];
 			
 			Return[allinvariants],
@@ -1044,22 +1044,22 @@ AllInvariantsSU3[labelsrepresentations_List]:=
 				labelsantif=
 					Join@@
 						Table[
-							{i,##}&@@@Map[List,PartitionsK[Complement[labelsantif,i],3],{3}], (*similar to the definition of PartitionK, we take the excedeeing elements*)
-							{i,Flatten[Permutations/@Subsets[labelsantif,{numfund}],1]} (*permutations of the subsets with number of elements equal to the number of exceding elements between fund and antifund*)
+							{i,##}&@@@PartitionsK[Complement[labelsantif,i],3], (*similar to the definition of PartitionK, we take the excedeeing elements*)
+							{i,Flatten[Permutations/@Subsets[labelsantif,{numfund}],1]}(*permutations of the subsets with number of elements equal to the number of exceding elements between fund and antifund*)
 						];
 					
 				allinvariants=
 					MapAt[
 						Sequence@@
 							Transpose[
-								Join[{#},{labelsfund}]
+								Join[{labelsfund},{#}]
 							]&,
 						labelsantif,
 						{All,1}
 					];
 				allinvariants=If[MemberQ[#,x_/;(x[[1]]==x[[2]])],Nothing,#]&/@allinvariants,
 				
-				allinvariants=Map[List,PartitionsK[labelsantif,3],{3}]
+				allinvariants=PartitionsK[labelsantif,3]
 			];
 			
 			Return[allinvariants]
