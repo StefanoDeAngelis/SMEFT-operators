@@ -822,7 +822,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices*)
 
 
@@ -839,7 +839,15 @@ ContractSU3[exp_(*,dummylabel_*)]:= (*dummylabel is needed because I don't want 
 			DeltaSU3[a_,b_] /; (a==b) :> 3,
 			
 			EpsilonAFundSU3[d_,e_,f_]EpsilonFundSU3[a_,b_,c_] :> -(DeltaSU3[d, c]*DeltaSU3[e, b]*DeltaSU3[f, a]) + DeltaSU3[d, b]*DeltaSU3[e, c]*DeltaSU3[f, a] + DeltaSU3[d, c]*DeltaSU3[e, a]*DeltaSU3[f, b] - DeltaSU3[d, a]*DeltaSU3[e, c]*DeltaSU3[f, b] - DeltaSU3[d, b]*DeltaSU3[e, a]*DeltaSU3[f, c] + DeltaSU3[d, a]*DeltaSU3[e, b]*DeltaSU3[f, c],
-
+			
+			DeltaSU3[a_,b_]*EpsilonAFundSU3[c_,d_,e_]/;(b==e):>EpsilonAFundSU3[c,d,a],
+			DeltaSU3[a_,b_]*EpsilonAFundSU3[c_,e_,d_]/;(b==e):>EpsilonAFundSU3[c,a,d],
+			DeltaSU3[a_,b_]*EpsilonAFundSU3[e_,c_,d_]/;(b==e):>EpsilonAFundSU3[a,c,d],
+			
+			DeltaSU3[b_,a_]*EpsilonFundSU3[c_,d_,e_]/;(b==e):>EpsilonFundSU3[c,d,a],
+			DeltaSU3[b_,a_]*EpsilonFundSU3[c_,e_,d_]/;(b==e):>EpsilonFundSU3[c,a,d],
+			DeltaSU3[b_,a_]*EpsilonFundSU3[e_,c_,d_]/;(b==e):>EpsilonFundSU3[a,c,d],
+			
 			DeltaAdjSU3[A_,B_] /; (A==B) :> 8,
 
 			StructureConstantSU3[A_,B_,C_]DeltaAdjSU3[D_,EE_] /; (C==EE):> StructureConstantSU3[A,B,D],
@@ -974,7 +982,7 @@ PartitionsK[list_,l_]:= (*Iterative definition of the partitions of a set in sub
 		]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*All invariants (list form)*)
 
 
