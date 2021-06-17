@@ -856,13 +856,13 @@ ContractSU3[exp_,dummylabel_:0]:= (*dummylabel is needed because I don't want th
 			
 			EpsilonAFundSU3[d_,e_,f_]EpsilonFundSU3[a_,b_,c_] :> -(DeltaSU3[d, c]*DeltaSU3[e, b]*DeltaSU3[f, a]) + DeltaSU3[d, b]*DeltaSU3[e, c]*DeltaSU3[f, a] + DeltaSU3[d, c]*DeltaSU3[e, a]*DeltaSU3[f, b] - DeltaSU3[d, a]*DeltaSU3[e, c]*DeltaSU3[f, b] - DeltaSU3[d, b]*DeltaSU3[e, a]*DeltaSU3[f, c] + DeltaSU3[d, a]*DeltaSU3[e, b]*DeltaSU3[f, c],
 			
-			DeltaSU3[a_,b_]*EpsilonAFundSU3[c_,d_,b_]:>EpsilonAFundSU3[c,d,a],
-			DeltaSU3[a_,b_]*EpsilonAFundSU3[c_,b_,d_]:>EpsilonAFundSU3[c,a,d],
-			DeltaSU3[a_,b_]*EpsilonAFundSU3[b_,c_,d_]:>EpsilonAFundSU3[a,c,d],
+			HoldPattern[DeltaSU3[a_,b_]*EpsilonAFundSU3[c_,d_,b_]]:>EpsilonAFundSU3[c,d,a],
+			HoldPattern[DeltaSU3[a_,b_]*EpsilonAFundSU3[c_,b_,d_]]:>EpsilonAFundSU3[c,a,d],
+			HoldPattern[DeltaSU3[a_,b_]*EpsilonAFundSU3[b_,c_,d_]]:>EpsilonAFundSU3[a,c,d],
 			
-			DeltaSU3[b_,a_]*EpsilonFundSU3[c_,d_,b_]:>EpsilonFundSU3[c,d,a],
-			DeltaSU3[b_,a_]*EpsilonFundSU3[c_,b_,d_]:>EpsilonFundSU3[c,a,d],
-			DeltaSU3[b_,a_]*EpsilonFundSU3[b_,c_,d_]:>EpsilonFundSU3[a,c,d],
+			HoldPattern[DeltaSU3[b_,a_]*EpsilonFundSU3[c_,d_,b_]]:>EpsilonFundSU3[c,d,a],
+			HoldPattern[DeltaSU3[b_,a_]*EpsilonFundSU3[c_,b_,d_]]:>EpsilonFundSU3[c,a,d],
+			HoldPattern[DeltaSU3[b_,a_]*EpsilonFundSU3[b_,c_,d_]]:>EpsilonFundSU3[a,c,d],
 			
 			DeltaAdjSU3[A_,B_] /; (A==B) :> 8,
 
