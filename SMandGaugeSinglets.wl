@@ -63,14 +63,14 @@ AllOperators::usage = "..."
 Begin["`Private`"]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Transformation rules*)
 
 
 TransformationRules={GGp->{adj,sing,0},WWp->{sing,adj,0},BBp->{sing,sing,0},GGm->{adj,sing,0},WWm->{sing,adj,0},BBm->{sing,sing,0},QQ->{fund,fund,1/6},uu->{afund,sing,-(2/3)},dd->{afund,sing,1/3},LL->{sing,fund,-(1/2)},ee->{sing,sing,1},QBar->{afund,afund,-(1/6)},uBar->{fund,sing,2/3},dBar->{fund,sing,-(1/3)},LBar->{sing,afund,1/2},eBar->{sing,sing,-1},HH->{sing,fund,1/2},HBar->{sing,afund,-(1/2)}}
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Fields and their helicity configuration*)
 
 
@@ -88,7 +88,7 @@ FermionQ[x_]:=MemberQ[Fermions,x]
 BosonQ[x_]:=MemberQ[Bosons,x]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Fields order*)
 
 
@@ -197,7 +197,7 @@ SU2singlet[replist_List]:=
 		]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Gauge Singlets*)
 
 
@@ -269,7 +269,7 @@ HookContentFormula[partition_List,flavours_]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Final Amplitude*)
 
 
@@ -309,7 +309,7 @@ amplitudes=MapAt[Times@@(HookContentFormula[#,Nf]&/@#)&,amplitudes,{All,1}];*)
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Identities Between Amplitudes*)
 
 
@@ -375,7 +375,7 @@ DeleteRedundant[{fields_List,operators_List},momenta_Integer,allstructures_List]
 		SimpSU3[x_]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2]||NumberQ[x]:=x;
 		SimpSU3[x_*a__]/;MatchQ[Head[x],Power|SpinorAngleBracket|SpinorSquareBracket|EpsilonSU2|EpsilonSU2[]|EpsilonSU2[_]|TauSU2|TauSU2[__]|StructureConstantSU2|DeltaSU2]||NumberQ[x]:=x*SimpSU3[Times[a]];
 			
-		Set@@@(MapAt[SimpSU3,#,{1}]&/@AllIdentitiesSU3[SMandGaugeSinglets`Private`SU3singlet[singlets[[1]]]]);
+		Set@@@(MapAt[SimpSU3,#,{1}]&/@AllIdentitiesSU3[SMandGaugeSinglets`Private`SU3singlet[singlets[[1]]],Length[fields]+1]);
 		SimpSU3[x_]:=x;
 		
 		localoperators=MapAt[Expand[SimpSU3[#]]&,#,{2,All}]&/@localoperators;
@@ -426,7 +426,7 @@ IdentitiesBetweenAmplitudes[d_Integer][{species_List,fieldEops_List}]:=
 		]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*All Operators*)
 
 
