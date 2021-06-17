@@ -835,7 +835,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices*)
 
 
@@ -1131,7 +1131,7 @@ SimplifyInvariants[list_List]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Relations between the SU(3) invariants up to dimension 8 SMEFT operators (up to dimension 9 for the moment)*)
 
 
@@ -1160,18 +1160,18 @@ AllIdentitiesSU3[labelsrepresentations_List]:=
 				identities=(*ContractSU3[IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies]*)
 			];
 			If[nF<nAF,
-				delta={List/@Take[labelsantif,nAF-nF],Take[labelsantif,-nF-nA]};
+				delta={Take[labelsantif,nAF-nF],Take[labelsantif,-nF-nA]};
 				delta=MapAt[Sequence@@Partition[#,3]&,delta,1];
-				delta=Times@@ToDelta/@MapAt[Sequence@@Transpose[{#,labelsfund}]&,delta,2];
-				identities=4*AdjConstraint[Symmetrise[delta,aLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
+				delta=Times@@ToDelta/@MapAt[Sequence@@Transpose[{labelsfund,#}]&,delta,2];
+				identities=4*AdjConstraint[Symmetrise[delta,bLabel/@labelsantif,"AntiSymmetric"->True]]//Expand;
 				identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
 				identities=(*ContractSU3[IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies]*)
 			];
 			If[nAF<nF,
-				delta={Take[labelsfund,nF-nAF],Take[labelsfund,-nA-nAF]};
+				delta={List/@Take[labelsfund,nF-nAF],Take[labelsfund,-nA-nAF]};
 				delta=MapAt[Sequence@@Partition[#,3]&,delta,1];
-				delta=Times@@ToDelta/@MapAt[Sequence@@Transpose[{labelsantif,#}]&,delta,2];
-				identities=4*AdjConstraint[Symmetrise[delta,bLabel/@labelsfund,"AntiSymmetric"->True]]//Expand;
+				delta=Times@@ToDelta/@MapAt[Sequence@@Transpose[{#,labelsantif}]&,delta,2];
+				identities=4*AdjConstraint[Symmetrise[delta,aLabel/@labelsfund,"AntiSymmetric"->True]]//Expand;
 				identities=Product[TauSU3[ALabel[i],bLabel[i],aLabel[i]],{i,labelsadj}]*identities;
 				identities=(*ContractSU3[IndependentAdjSU3[*)ContractSU3[identities(*,dummies]*)](*,dummies]*)
 			];
