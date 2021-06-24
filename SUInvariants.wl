@@ -259,7 +259,7 @@ RenameDummiesSU2[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices in the fundamental*)
 
 
@@ -360,6 +360,7 @@ ContractSU2[exp_,dummylabel_]:= (*dummylabel is needed because I don't want the 
 
 			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==D):> DeltaSU2[A,B],
 			DeltaSU2[A_,C_]DeltaSU2[B_,D_]/;(C==B):> DeltaSU2[A,D],
+			DeltaSU2[A_,B_]DeltaSU2[A_,C_]:> DeltaSU2[B,C],
 
 			Power[DeltaSU2[A_,C_],2]:>3
 			};
