@@ -1,2 +1,2 @@
 # SMEFT-operators
-A Mathematica package which generates all the possible SMEFT operators to any dimension
+A Mathematica package which classify SMEFT operators using Spinor Helicity Formalism.
