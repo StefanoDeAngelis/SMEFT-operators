@@ -18,6 +18,7 @@ AmplitudesScalars::usage = "..."
 
 IndependentFormFactors::usage = "..."
 IndependentHelicityFactors::usage = "..."
+HelicityFactors::usage = "..."
 
 SchoutenIdentities::usage = "..."
 SingleStructureIdentities::usage = "..."
@@ -333,7 +334,7 @@ IndependentFormFactors[d_Integer,OptionsPattern[]]:=
 	]
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Independent Helicity Factors*)
 
 
@@ -355,6 +356,31 @@ IndependentHelicityFactors[dim_Integer,OptionsPattern[]][list__?(Length[#]==2 &&
 		structures=If[Length[#]<2,Nothing,#]&/@Map[IsLoopLessDoable,structures,{2}];
 		
 		structures=HelicityStructures[#,"MomentumConservation"->OptionValue["MomentumConservation"]]&/@Map[Thread[{labels,#}]&,structures,{2}];
+		
+		Return[Flatten@structures]
+	]
+
+
+(* ::Subsection:: *)
+(*All Helicity Factors*)
+
+
+HelicityFactors[dim_Integer][list__?(Length[#]==2 && IntegerQ[2*#[[2]]]&)]:=
+	Module[{labels=Part[#,1]&/@{list},angles,squares,structures},
+	
+		{angles,squares}={Abs[#]-#,Abs[#]+#}&@(Part[#,2]&/@{list});
+		
+		structures=PermutationsOfPartitions[dim-Total[angles]/2-Total[squares]/2,Length[angles]];
+		
+		structures={angles+#,squares+#}&/@structures;
+		
+		structures=If[Length[#]<2,Nothing,#]&/@Map[IsLoopLessDoable,structures,{2}];
+
+		structures=Map[AllGraphs[#]&,structures,{2}];
+
+		structures=Sequence@@@Tuples/@structures;
+	
+		structures=FromMatrixToSpinors[#,labels]&/@structures;
 		
 		Return[Flatten@structures]
 	]
