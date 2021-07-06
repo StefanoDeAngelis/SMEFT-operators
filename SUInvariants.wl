@@ -259,7 +259,7 @@ RenameDummiesSU2[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices in the fundamental*)
 
 
@@ -811,7 +811,7 @@ TensorDSU3[A_,B_,C_] /;  (A==B)||(B==C)||(A==C) :=0;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Rename dummies*)
 
 
@@ -829,6 +829,11 @@ RenameDummiesSU3[exp_,n_]:=
 			HoldPattern[bLabel[h_]]:>AppendTo[dummies,bLabel[h]],
 			\[Infinity]
 		];
+		Cases[
+			{exp},
+			HoldPattern[cLabel[h_]]:>AppendTo[dummies,cLabel[h]],
+			\[Infinity]
+		];
 		dummies=DeleteCases[dummies,_?(Count[dummies,#]!=2&)];
 		dummies=DeleteDuplicates[dummies];
 		localexp=ReplaceAll[exp,Thread[dummies->Table[cLabel[n+i],{i,0,Length[dummies]-1}]]];
@@ -836,7 +841,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Contract indices*)
 
 
