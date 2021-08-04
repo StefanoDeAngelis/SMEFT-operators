@@ -234,7 +234,7 @@ DeltaSU2[A_,B_] /; (A==B) := 3;
 (*Contractions and dummy labels*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Rename dummies*)
 
 
@@ -246,14 +246,24 @@ RenameDummiesSU2[x_Plus,n_]:=Plus@@(RenameDummiesSU2[#,n]&/@(List@@x))
 
 RenameDummiesSU2[exp_,n_]:=
 	Module[{localexp,dummies={}},
-		Cases[
-			{exp},
-			HoldPattern[XLabel[h_]]:>AppendTo[dummies,h],
-			\[Infinity]
+		Block[{TauSU2},
+			TauSU2[A_,a_][b_]:=TauSU2[A,a,b];
+			TauSU2[A_][a_,b_]:=TauSU2[A,a,b];
+			Cases[
+				{exp},
+				HoldPattern[XLabel[h_]]:>AppendTo[dummies,XLabel[h]],
+				\[Infinity]
 			];
+			Cases[
+				{exp},
+				HoldPattern[ILabel[h_]]:>AppendTo[dummies,ILabel[h]],
+				\[Infinity]
+			]
+		];
+		dummies=DeleteCases[dummies,_?(Count[dummies,#]!=2&)];
 		dummies=DeleteDuplicates[dummies];
 		
-		localexp=ReplaceAll[exp,Thread[XLabel/@dummies->XLabel/@Table[n+i-1,{i,1,Length[dummies]}]]](*ReLabel[exp,dummies,Table[n+i-1,{i,1,Length[dummies]}]]*);
+		localexp=ReplaceAll[exp,Thread[dummies->XLabel/@Table[n+i-1,{i,1,Length[dummies]}]]](*ReLabel[exp,dummies,Table[n+i-1,{i,1,Length[dummies]}]]*);
 		
 		Return[localexp];
 	]
@@ -841,7 +851,7 @@ RenameDummiesSU3[exp_,n_]:=
 	]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Contract indices*)
 
 
@@ -1137,7 +1147,7 @@ SimplifyInvariants[list_List]:=
 	]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Relations between the SU(3) invariants up to dimension 8 SMEFT operators (up to dimension 9 for the moment)*)
 
 
