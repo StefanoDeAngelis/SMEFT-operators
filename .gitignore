@@ -1,8 +1,8 @@
 
 *.nb
 !Example.nb
-LaTeX/SMEFT_OnShell.pdf
-LaTeX/SMEFT_OnShell.synctex.gz
+LaTeX/*
+LaTeX/*
 1512.03433/HSSM5to12.m
 Old versions/GraphGenerator1.wl
 Old versions/HelicityStructures1.wl
