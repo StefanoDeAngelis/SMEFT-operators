@@ -213,7 +213,7 @@ AllNonIntersectingGraphs[lines_List]:=
 		ComputedNonIntersectingGraphs[lines]
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Schouten = loosen crossings*)
 
 
@@ -259,13 +259,22 @@ SchoutenCrossing[adjacencymatrix_?MatrixQ]:=
 (*Instead of untie recursively all the crossings we can choose to untie the first one for all the graphs (this gives an loosening rule) and then substitute recursively. Slower (about x10): count the intersections as Sum[adjacencymatrix[[k,l]]] / use the IsGraphNonIntersecting, and apply recursively the SchoutenCrossing.*)
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Draw graph*)
 
 
 ellipseLayout[n_,{a_,b_}]:=Table[{a Cos[Pi-2 Pi/n *u],b Sin[Pi-2 Pi/n* u]},{u,1,n}];
 
-DrawAdjacencyGraph[adjacencymatrix_]:=(AdjacencyGraph[#,VertexCoordinates->ellipseLayout[Length[#],{1,1}]])&@adjacencymatrix
+Options[DrawAdjacencyGraph]={"Colour"->Blue,"Labels"->{}}
+
+DrawAdjacencyGraph[adjacencymatrix_,OptionsPattern[]]:=
+	(
+		AdjacencyGraph[#,
+			EdgeStyle->OptionValue["Colour"],
+			VertexCoordinates->ellipseLayout[Length[#],{1,1}],
+			VertexLabels->(Thread[Rule[Range[Length@#],Map[Placed[#,Above]&,#,{1}]]]&@OptionValue["Labels"])
+		]
+	)&@adjacencymatrix
 
 
 End[]
