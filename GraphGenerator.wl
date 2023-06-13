@@ -12,7 +12,7 @@ BeginPackage["GraphGenerator`"]
 
 
 PermutationsOfPartitions::usage = "..."
-PermutationMatrix::usage = "..."
+(*PermutationMatrix::usage = "..."*)
 
 IsLoopLessDoable::usage = "..."
 
@@ -55,7 +55,7 @@ PermutationsOfPartitions[counting_,length_]:= (*this function generates the perm
 (*Permutation Matrix*)
 
 
-PermutationMatrix[p_List]:=IdentityMatrix[Length[p]][[p]]
+permutationMatrix[p_List]:=IdentityMatrix[Length[p]][[p]]
 
 
 (* ::Subsection::Closed:: *)
@@ -141,7 +141,7 @@ GraphToMatrix[list_List]:= (*from the graph (the assigned lines), this gives the
 AllGraphs[lines___Integer]:=AllGraphs[{lines}]
 
 Graphs[lines_List]:=ComputedGraphs[lines]=
-	Module[{adjacencymatrices,perm=PermutationMatrix[Ordering[lines]],locallines=Sort[DeleteCases[lines,0]],i},
+	Module[{adjacencymatrices,perm=permutationMatrix[Ordering[lines]],locallines=Sort[DeleteCases[lines,0]],i},
 	
 		(*If[locallines==={},Return[{Table[0,#,#]&@Count[lines,0]}]];*)
 		(*If[locallines==={},Return[{{0}}]];*)
